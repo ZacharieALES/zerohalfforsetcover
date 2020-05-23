@@ -1,0 +1,11 @@
+L'objectif du stage est d'améliorer la résolution de problèmes de set cover en générant des coupes d'un certain type.
+
+Ce qu'on appelle générer des coupes signifie que pendant la résolution on va ajouter des inégalités aux noeuds du branch-and-bound afin d'essayer d'améliorer leur relaxation (ce qui pourrait diminuer le nombre de sommets de l'arborescence et donc le temps de calcul).
+
+Tu peux commencer par dércire le problème de set cover dans ton rapport.
+Ensuite tu peux lire l'article suivant :
+https://link.springer.com/content/pdf/10.1007/s00453-008-9218-7.pdf
+et résumer son contenu, notamment :
+- quelle est la définition des coupes considérées  ?
+- quelles sont les différentes façon de les générer ?
+- qu'est-ce qui semble marcher le mieux ?
