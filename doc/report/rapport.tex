@@ -79,104 +79,158 @@ Zacharie ALES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Introduction :
 \chapter{Introduction}
 
-\section{Exemples}
+\section{Problème de set-cover}
 
-\subsection{Bases}
+\subsection{Définition du problème}
 
-Text normal.
+Soit un ensemble U, un sous-ensemble de l'ensemble des parties de U, et un entier k. On souhaite savoir si il existe un sous-ensemble T de S de taille k tel que tous les éléments de U sont couvert par l'union des sous-ensemble de T, c'est-à-dire :
+$$
+\forall e \in U, \ e \in \underset{t \in T}{\cap}t
+$$
 
-\textit{Texte italique.}
+\subsection{Résolution sous la forme d'un programme linéaire}
 
-\textbf{Texte en gras.}
+Résoudre ce problème revient à résoudre le programme linéaire suivant:
 
-\underline{Texte souligné.}
+$$
+\left\{
+    \begin{array}{ll}
+        min &  \underset{s \in S}{\sum}x_s \\
+        tq &  \underset{s , \ e\in s} {\sum}x_s \ge 1, \ \forall e e \in U \\
+         & x_s \in \{ 0,1 \}, \ \forall s \in S
+    \end{array}
+\right.
+$$
+La fonction coût à optimiser correspond à la taille du sous-ensemble T que l'on cherche à minimiser, la première contrainte impose que tout les éléments de U sont couverts par l'union des sous-ensembles de T. La dernière contrainte impose que l'on peut soit choisir un sous-ensemble dans la couverture, soit ne pas le prendre.
 
-\subsection{Listes}
+\subsection{Application du problème de set-cover}
 
-Liste sans numéro :
-\begin{itemize}
-\item item 1 ;
-\item item 2.
-\end{itemize}
-
-Liste avec numéro :
-\begin{enumerate}
-\item item 1 ;
-\item item 2.
-\end{enumerate}
-
-\subsection{Formules mathématiques}
-
-Exemple de formule mathématique :
-$ x_j + \alpha_j = \varepsilon_1 + z^2 + \frac 1 2 + \sum_{i=1}^n w_i\quad \forall j\in\{1,
-..., p\}$
-
-Exemple d'équation numérotée :
-
-\begin{equation}
-x = y
-  \label{eq:monEquation}
-\end{equation}
-
-Référence à cette équation : \eqref{eq:monEquation}.
-
-\subsection{Tableaux}
-
-La table~\ref{tab:ex} contient trois colonnes :
-\begin{itemize}
-\item la première est centrée à gauche('l' : left) ;
-\item la seconde est centrée ('c' : center) ;
-\item la troisième est centrée à droite ('r' : right)
-\end{itemize}
-\begin{table}[h!]
-  \centering
-\begin{tabular}{lcr}
-\hline % Représente une ligne horizontale (doit toujours être en début
-       % de ligne
-
-\textbf{Titre 1} & \textbf{Titre 2} & \textbf{Titre 3} \\
-\hline
-
-c1 & c2 & c3 \\
-c4 & c5 & c6\\
-\hline
-\end{tabular}
-
-\caption{Exemple de table.}
-\label{tab:ex}
-\end{table}
-
-
-\subsection{Figures}
-
-La figure~\ref{fig:maFigure} représente le logo de l'ENSTA.
+Le problème de set-cover trouve une application dans la résolution du problème des P-centres. Ce problème est le suivant : on considère un ensemble de point, et un ensemble de positions possibles. On cherche à placer P-centres sur ces positions afin de minimiser la plus grande distance entre un point et le centre le plus proche. Ce problème correspond par exemple au choix d'un terrain pour la mise en place d'usines ou de magasins d'être le plus proche possible des clients.
 
 \begin{figure}[h!]
   \centering
-  \includegraphics[height=4cm]{Logo_ENSTA_Paris.png}
-  \caption{Légende}
-  \label{fig:maFigure}
+  \includegraphics[height=4cm]{exemple_P_centre.png}
+  \caption{Exemple du problème des 2-centres}
+  \label{fig:2-Centre}
 \end{figure}
+La figure ci-dessus est un exemple du problème des 2-centres. Les points bleus correspondent aux points ou maison, tandis que les points rouges correspondent aux positions possibles ou placer les deux usines.
+\newline
+Afin de résoudre ce problème, on exprime les distances à chacune des usines sous la forme d'un tableau :
+\begin{center}
+\begin{tabular}{ | c | c | c | c | }
+    \hline
+    & G & H & I \\ \hline
+    A & 2 & $\sqrt{13}$ & $\sqrt{10}$ \\ \hline
+    B & 1 & $\sqrt{2}$ & $\sqrt{5}$ \\ \hline
+    C & 1 & 2 & $\sqrt{13}$ \\ \hline
+    D & $\sqrt{13}$ & $\sqrt{10}$ & 1 \\ \hline
+    E & $\sqrt{17}$ & $2\sqrt{2}$ & 1 \\ \hline
+    F & 2 & 1 & $\sqrt{2}$ \\ \hline
+\end{tabular}
+\end{center}
+On ordonne ensuite les distances sans répétition, et on met en place un dichotomie, en cherchant un solution au problème de set-cover avec k=2, en ne considérant que les distances inférieures à celle de la dichotomie.
 
-\subsection{Références bibliographiques}
- 
-Pour citer un article en latex il faut :
-\begin{enumerate}
-\item  trouver  le  fichier  .bib  associé  à  cet  article  (on  peut
-  généralement le trouve sur le site google
-  scholar) ;
-\item   copier   le   contenu   de  ce   fichier   dans   le   fichier
-  "bibliography.bib" ;
-\item citer ce fichier en  utilisant son identifiant (l'identifiant se
-  trouve au début du fichier .bib).
-\end{enumerate}
+\subsection{Mise en place de coupe}
+Afin d'assurer un temps de résolution correct, on met en place l'algorithme du simplex qui va nous permettre d'obtenir une solution dans le cadre continu et non dans le cadre discret. Afin d'affiner cette résolution, on cherche à mettre en place des coupes, qui vont affiner cette résolution.
 
-Par  exemple, pour  créer la  référence~\cite{bertsimas2017optimal}, il
-faut taper :
+\section{Etude des coupes $\{0,\frac{1}{2}\}$ }
+Avant de mettre en place la génération de coupe, j'ai étudié l'article de $\backslash$cite\{koster2009algorithms\}.
 
-$\backslash$cite\{bertsimas2017optimal\}.
+\subsection{Définition des coupes $\{0,\frac{1}{2}\}$}
+On considère le problème d'optimisation linéaire dans sa forme minimiser :
+$$
+\left\{
+    \begin{array}{ll}
+        min& \ c^Tx \\
+        tq &  Ax \le b \\
+          & x \ge 0 \\
+          & x \in Z^n \\
+    \end{array}
+\right.
+$$
+On s'interresse à une coupe de Chvatal-Gomory :
+$$
+\lfloor u^TA \rfloor x \le \lfloor u^Tb \rfloor, \ avec \ u \in [0,1[^m
+$$
+Ici, u n'évolue plus dans $[0,1[^m$, mais dans $\{0,\frac{1}{2}\}^m$.
 
+\subsection{Existence d'une coupe}
+Tout d'abord le document présente le raisonnement qui permet de déterminer si à partir d'une solution non entière le système admet un coupe, c'est à dire un vecteur u tel que l'inégalité n'est pas respectée. Pour cela, on définit une fonction de violation de la manière suivante :
+$$
+z(u,x^\ast)=\lfloor u^TA \rfloor x^\ast-\lfloor u^Tb \rfloor
+$$
+On cherche donc un vecteur u tel que $z(u,x^\ast)>0$.
+Pour cela on définit les éléments suivants :
+$$
+\overset{\_}{A}=A \ mod \ 2, \ \overset{\_}{b}=b \ mod \ 2,\ s = b-Ax^\ast \ge 0
+$$
+Dans un premier temps, l'auteur énonce et fait la démonstration du lemme suivant, qui donne une condition nécessaire suffisante quand à l'existence d'une coupe :
+\newline
+\newline
+Soit $x^\ast$ une solution entière, $\exists$ u $\in$ $\{0,\frac{1}{2}^m$ tel que $z(u,x^\ast)<0$, si et seulement si $\exists$ v $\in$ $\{0,1\}^m$ qui vérifie $v^T\overset{\_}{b}$ impair et $v^Ts+(v^T\overset{\_}{A}\ mod\ 2)x^\ast < 1 $
+\newline
+\newline
+Pour démontrer ce lemme, il faut développer l'expression de $z(u,x^\ast)$:
+\newline
+\begin{equation}
+\begin{split}
+z(u,x^\ast) & =\lfloor u^TA \rfloor x^\ast-\lfloor u^Tb \rfloor \\
+ & = \frac{1}{2}((2u^T)\overset{\_}{b}\ mod\ 2) -v^Ts-\frac{1}{2}((2u^T\overset{\_}{A}\ mod \ 2)x^\ast)
+\end{split}
+\end{equation}
+En posant v=2u, et en remarquant que tous les termes de la différences sont positifs, on en déduit les conditions précédentes.
+\newline
+Ensuite, afin d'alléger la recherche d'un vecteur v adéquats, l'auteur met en place les règles de simplification suivante afin d'alléger le système sans modifier l'ensemble des coupes non-dominées.
+\begin{itemize}
+    \item On peut supprimer les colonnes dans $\overset{\_}{A}$, qui correspondent à une valeur nulle de $x^\ast$. En effet cela ne modifie pas l'inégalité $v^Ts+(v^T\overset{\_}{A}\ mod\ 2)x^\ast < 1 $.
+    \item On peut supprimer les lignes de zéro dans $(\overset{\_}{A},\overset{\_}{b})$, car cela n'a d'effet que su la slack s.
+    \item On peut supprimer les colonnes de zéro de $\overset{\_}{A}$, cela ne modifie donc pas l'inégalité.
+    \item On peut remplacer les colonnes identiques dans $\overset{\_}{A}$ par une seule colonne représentative, dont la variable associée est la somme des variables correspondantes. Soit aucune soit toutes les variables correspondantes devront sinon être arrondies.
+    \item Toutes les colonnes dont la slack associée vérifie $s_j\ge1$ peuvent être supprimées, car sinon cela contredit directement l'inégalité si le $v_j$ correspondant vaut 1.
+    \item On peut supprimer toutes les colonnes identiques dans $(\overset{\_}{A},\overset{\_}{b})$ sauf pour celle dont la slack est la plus petite.
+\end{itemize}
+Lors de la première itération chaque ligne du système $(\overset{\_}{A},\overset{\_}{b},s)$ correspond à une unique inégalité. Cependant pour les itérations suivantes, on doit mettre en place une opération afin de pouvoir combiner les lignes.
+Si on combine les lignes i et j sur la ligne j, cette opération est la suivante :
+$$
+\forall k, \overset{\_}{a_{ik}}+\overset{\_}{a_{jk}}=\overset{\_}{a_{jk}} \ mod \ 2, \ \overset{\_}{b_{j}}=\overset{\_}{b_{i}}+\overset{\_}{b_{j}} \ mod \ 2, \ s_j=s_i+s_j et R_j=R_i\Delta R_j
+$$
+avec
+$$
+X\Delta Y= X\cap Y \backslash (X \cup Y)
+$$
+Dans le cas particulier suivant, il est possible de repérer facilement un vecteur u entraînant la violation de la coupe associée. Si on ce place dans le cas où la $i^{ème}$ rangé de $\overset{\_}{A}$ est nulle et que $\overset{\_}{b}_j = 1$, alors si $s_j<1$, en posant u tel que $\forall j \in R_j \ u_j=\frac{1}{2} $ et 0 sinon, on définit une coupe violée du système initial $(A,b,s)$. Cela se voit rapidement, en posant v tel que $\forall j \in R_j \ 1  $ et 0 sinon, et en appliquant le lemme précèdent. 
+\newline
+\newline
+L'auteur met en place deux nouvelles propositions, qui mettent en place de nouvelles règles de simplification.
+Tout d'abord soit i et k des indices de lignes et de colonnes tels que $\overset{\_}{a_{ik}}=1$, et $s_i=0$, alors on peut supprimer la colonne k de $\overset{\_}{A}$ à condition d'ajouter la ligne i à toutes les autres lignes telles que $\overset{\_}{a_{ik}}=1$ et en imposant $s_j=x^\ast$.
+En faisant le calcul dans ce cas là, on met en avant le fait que la fonction de violation est avant et après le changement.
+\newline
+Enfin, Tout d'abord soit i et k des indices de lignes et de colonnes tels que $\overset{\_}{a_{ik}}=1$, et $s_i=0$ et $x^\ast \ge 1$, alors on peut supprimer la ligne i et la colonne k de $\overset{\_}{A}$ à condition d'ajouter la ligne i à toutes les autres lignes telles que $\overset{\_}{a_{ik}}=1$ et en imposant $s_j=x^\ast$. Pour cela on applique la proposition précédente, et on se retrouve dans la situation de la troisième proposition de suppression.
+\newline
+\newline
+Ces règles de simplification, ainsi que de détection de coupes violées seront très utiles pour la mise en place de la méthode heuristique. 
 
+\subsection{Résolution via un programme linéaire}
+Une première approche peut-être de modéliser le problème de coupe par un système linéaire de la forme suivante :
+$$
+\left\{
+    \begin{array}{ll}
+        z=&min \ s^Tv+(x^\ast)^Ty \\
+        tq &  \overset{\_}{b}^Tv-2q=1 \\
+          & \overset{\_}{A}^Tv-2r-y=0 \\
+          & v \in \{0,1\}^n \\
+          & y \in \{0,1\}^n \\
+          & r \in Z^n_+ \\
+          & q \in Z^n \\
+    \end{array}
+\right.
+$$
+La première égalité impose que $\overset{\_}{b}^Tv$ soit impair, la seconde permet de calculer le reste de la division euclidienne de $\overset{\_}{A}^Tv$ par 2. La fonction coût permet de déterminer $v^Ts+(v^T\overset{\_}{A}\ mod\ 2)x^\ast$. Si cette valeur est inférieure ou égale à 1 alors une coupe violée n'a pas été trouvée, et si cette valeur est supérieure à 1 alors il en existe une coupe violée, qui correspond à la combinaison des inégalités pour laquelle $v_j$ vaut 1.
+Cependant, on peut s'attendre à ce que le temps de résolution de ce programme auxiliaire soit trop long, il est donc intéressant d'étudier les méthodes de résolution heuristique.
+
+\subsection{Résolution heuristique}
+La méthode de résolution heuristique suivante est développée. Tant que l'on ne trouve pas de coupe violée, on teste les combinaisons de plus en plus grande d'inégalité.
+\subsection{Résultat}
 
 \addcontentsline{toc}{chapter}{Bibliographie}
 
@@ -185,3 +239,4 @@ $\backslash$cite\{bertsimas2017optimal\}.
 \bibliography{bibliography}
 
 \end{document}
+

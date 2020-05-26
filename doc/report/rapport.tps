@@ -12,7 +12,7 @@ MaxPos.y=-1
 NormalPos.left=4
 NormalPos.top=36
 NormalPos.right=1562
-NormalPos.bottom=434
+NormalPos.bottom=474
 Class=LaTeXView
 Document=rapport.tex
 
