@@ -259,7 +259,7 @@ Après applications des étapes (a) à (c), on étudie les résultats des étape
 On obtient alors en considérant chacune des étapes une simplification de 95,5\% en moyenne.
 Cette simplification est très significative et permet d'accélerer grandement le temps de résolution, et permet de résoudre en moins de 10s des instances qui ne pouvaient sinon pas être résolues en dessous de ce temps.
 
-\subsubsection{Comparaison du nombre de noeuds du branche&cut}
+\subsubsection{Comparaison du nombre de noeuds du branche\&cut}
 Un premier élément pour comparer les performances de la coupe $\{0,\frac{1}{2}\}$, et la mesure du nombre de noeuds dans le branch\&cut. Dans cet approche, on compare 3 éléments :
 \begin{itemize}
     \item Fischetti et Lotti font appel à la coupe de Chvatal-Gomory pour la séparation
@@ -277,6 +277,8 @@ Afin de mettre en évidence que la résolution faisant appel un programme linéa
     \item le SCIP faisant appel au programme linéaire auxiliaire 
     \item le SCIP faisant appel à la méthode heuristique
 \end{itemize}
+De plus, on ne considère pas toutes les coupes violées, seulement celle dont la fonction de violation est supérieure à 0.35 afin d'éviter de générer des coupes inefficaces. Ensuite, jusqu'à 100 coupes violées sont transmises au SCIP, qui va choisir de les prendre en compte ou non.
+La méthodes heuristique améliore de 7\% en moyenne sur toutes les instances le temps de résolution de l'algorithme, et de 21\% pour les instances dont le temps de résolution absolue plus grand que 10s avec le SCIP par défault.
 
 \addcontentsline{toc}{chapter}{Bibliographie}
 
@@ -285,4 +287,3 @@ Afin de mettre en évidence que la résolution faisant appel un programme linéa
 \bibliography{bibliography}
 
 \end{document}
-
