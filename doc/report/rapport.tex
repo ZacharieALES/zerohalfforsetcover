@@ -131,7 +131,7 @@ Afin de résoudre ce problème, on exprime les distances à chacune des usines s
 On ordonne ensuite les distances sans répétition, et on met en place un dichotomie, en cherchant un solution au problème de set-cover avec k=2, en ne considérant que les distances inférieures à celle de la dichotomie.
 
 \subsection{Mise en place de coupe}
-Afin d'assurer un temps de résolution correct, on met en place l'algorithme du simplex qui va nous permettre d'obtenir une solution dans le cadre continu et non dans le cadre discret. Afin d'affiner cette résolution, on cherche à mettre en place des coupes, qui vont affiner cette résolution.
+Afin d'assurer un temps de résolution correct, on met en place l'algorithme du simplex qui va nous permettre d'obtenir une solution dans le cadre continu et non dans le cadre discret. Afin d'affiner cette résolution, on cherche à mettre en place des coupes.
 
 \section{Etude des coupes $\{0,\frac{1}{2}\}$ }
 Avant de mettre en place la génération de coupe, j'ai étudié l'article de $\backslash$cite\{koster2009algorithms\}.
@@ -181,13 +181,16 @@ z(u,x^\ast) & =\lfloor u^TA \rfloor x^\ast-\lfloor u^Tb \rfloor \\
 En posant v=2u, et en remarquant que tous les termes de la différences sont positifs, on en déduit les conditions précédentes.
 \newline
 Ensuite, afin d'alléger la recherche d'un vecteur v adéquats, l'auteur met en place les règles de simplification suivante afin d'alléger le système sans modifier l'ensemble des coupes non-dominées.
+\newline
+Proposition 3:
 \begin{itemize}
-    \item On peut supprimer les colonnes dans $\overset{\_}{A}$, qui correspondent à une valeur nulle de $x^\ast$. En effet cela ne modifie pas l'inégalité $v^Ts+(v^T\overset{\_}{A}\ mod\ 2)x^\ast < 1 $.
-    \item On peut supprimer les lignes de zéro dans $(\overset{\_}{A},\overset{\_}{b})$, car cela n'a d'effet que su la slack s.
-    \item On peut supprimer les colonnes de zéro de $\overset{\_}{A}$, cela ne modifie donc pas l'inégalité.
-    \item On peut remplacer les colonnes identiques dans $\overset{\_}{A}$ par une seule colonne représentative, dont la variable associée est la somme des variables correspondantes. Soit aucune soit toutes les variables correspondantes devront sinon être arrondies.
-    \item Toutes les colonnes dont la slack associée vérifie $s_j\ge1$ peuvent être supprimées, car sinon cela contredit directement l'inégalité si le $v_j$ correspondant vaut 1.
-    \item On peut supprimer toutes les colonnes identiques dans $(\overset{\_}{A},\overset{\_}{b})$ sauf pour celle dont la slack est la plus petite.
+    \item (i) On peut supprimer les colonnes dans $\overset{\_}{A}$, qui correspondent à une valeur nulle de $x^\ast$. En effet cela ne modifie pas l'inégalité $v^Ts+(v^T\overset{\_}{A}\ mod\ 2)x^\ast < 1 $.
+    \item (ii) On peut supprimer les lignes de zéro dans $(\overset{\_}{A},\overset{\_}{b})$, car cela n'a d'effet que su la slack s.
+    \item (iii) On peut supprimer les colonnes de zéro de $\overset{\_}{A}$, cela ne modifie donc pas l'inégalité.
+    \item (iv) On peut remplacer les colonnes identiques dans $\overset{\_}{A}$ par une seule colonne représentative, dont la variable associée est la somme des variables correspondantes. Soit aucune soit toutes les variables correspondantes devront sinon être arrondies.
+    \item (v) On peut supprimer toutes colonnes unitaires de $\overset{\_}{A}$ de la forme $\overset{\_}{a}^i=e^j $ en prenant soin d'ajouter $x_i^\ast$ à $s_j$. 
+    \item (vi) Toutes les colonnes dont la slack associée vérifie $s_j\ge1$ peuvent être supprimées, car sinon cela contredit directement l'inégalité si le $v_j$ correspondant vaut 1.
+    \item (vii) On peut supprimer toutes les colonnes identiques dans $(\overset{\_}{A},\overset{\_}{b})$ sauf pour celle dont la slack est la plus petite.
 \end{itemize}
 Lors de la première itération chaque ligne du système $(\overset{\_}{A},\overset{\_}{b},s)$ correspond à une unique inégalité. Cependant pour les itérations suivantes, on doit mettre en place une opération afin de pouvoir combiner les lignes.
 Si on combine les lignes i et j sur la ligne j, cette opération est la suivante :
@@ -202,15 +205,29 @@ Dans le cas particulier suivant, il est possible de repérer facilement un vecte
 \newline
 \newline
 L'auteur met en place deux nouvelles propositions, qui mettent en place de nouvelles règles de simplification.
-Tout d'abord soit i et k des indices de lignes et de colonnes tels que $\overset{\_}{a_{ik}}=1$, et $s_i=0$, alors on peut supprimer la colonne k de $\overset{\_}{A}$ à condition d'ajouter la ligne i à toutes les autres lignes telles que $\overset{\_}{a_{ik}}=1$ et en imposant $s_j=x^\ast$.
+\newline
+Tout d'abord, la proposition 5 est la suivante : soit i et k des indices de lignes et de colonnes tels que $\overset{\_}{a_{ik}}=1$, et $s_i=0$, alors on peut supprimer la colonne k de $\overset{\_}{A}$ à condition d'ajouter la ligne i à toutes les autres lignes telles que $\overset{\_}{a_{ik}}=1$ et en imposant $s_j=x^\ast$.
 En faisant le calcul dans ce cas là, on met en avant le fait que la fonction de violation est avant et après le changement.
 \newline
-Enfin, Tout d'abord soit i et k des indices de lignes et de colonnes tels que $\overset{\_}{a_{ik}}=1$, et $s_i=0$ et $x^\ast \ge 1$, alors on peut supprimer la ligne i et la colonne k de $\overset{\_}{A}$ à condition d'ajouter la ligne i à toutes les autres lignes telles que $\overset{\_}{a_{ik}}=1$ et en imposant $s_j=x^\ast$. Pour cela on applique la proposition précédente, et on se retrouve dans la situation de la troisième proposition de suppression.
+Enfin, la proposition 6 est la suivante : soit i et k des indices de lignes et de colonnes tels que $\overset{\_}{a_{ik}}=1$, et $s_i=0$ et $x^\ast \ge 1$, alors on peut supprimer la ligne i et la colonne k de $\overset{\_}{A}$ à condition d'ajouter la ligne i à toutes les autres lignes telles que $\overset{\_}{a_{ik}}=1$ et en imposant $s_j=x^\ast$. Pour cela on applique la proposition précédente, et on se retrouve dans la situation de la troisième proposition de suppression.
 \newline
 \newline
 Ces règles de simplification, ainsi que de détection de coupes violées seront très utiles pour la mise en place de la méthode heuristique. 
 
-\subsection{Résolution via un programme linéaire}
+\subsection{Pré-traitement des données}
+Avant de mettre en place la recherche de coupe, un pré-traitement des données est réalisée avec les étapes suivantes : 
+\begin{itemize}
+    \item (a) supprimer les colonnes nulles en appliquant (3i)
+    \item (b) supprimer les colonnes qui correspondent à $x^\ast$ petit en appliquant (3ii)
+    \item (c) supprimer les lignes de slack supérieure ou égale à 1 en appliquant (3vi)
+    \item (d) supprimer les colonnes en appliquant la proposition 5.
+    \item (e) supprimer les colonnes unitaires en appliquant (3v)
+    \item (f) ajouter à l'ensemble des coupes violées toute coupe correspondant à une ligne où $\overset{\_}{b}=1$ et qui à une violation d'au moins $\epsilon$, puis la supprimer de la matrice car toute coupe la contenant aura une violation inférieure
+    \item (g) supprimer toutes les colonnes identiques sauf pour celle de plus petite slack
+\end{itemize}
+Enfin à chaque étape on prend le soin de supprimer les colonnes et lignes nulles, ainsi que les lignes de slack supérieure à 1 dans $(\overset{\_}{A},\overset{\_}{b})$.
+
+\subsection{Méthode avec un programme linéaire}
 Une première approche peut-être de modéliser le problème de coupe par un système linéaire de la forme suivante :
 $$
 \left\{
@@ -228,9 +245,38 @@ $$
 La première égalité impose que $\overset{\_}{b}^Tv$ soit impair, la seconde permet de calculer le reste de la division euclidienne de $\overset{\_}{A}^Tv$ par 2. La fonction coût permet de déterminer $v^Ts+(v^T\overset{\_}{A}\ mod\ 2)x^\ast$. Si cette valeur est inférieure ou égale à 1 alors une coupe violée n'a pas été trouvée, et si cette valeur est supérieure à 1 alors il en existe une coupe violée, qui correspond à la combinaison des inégalités pour laquelle $v_j$ vaut 1.
 Cependant, on peut s'attendre à ce que le temps de résolution de ce programme auxiliaire soit trop long, il est donc intéressant d'étudier les méthodes de résolution heuristique.
 
-\subsection{Résolution heuristique}
+\subsection{Méthode heuristique}
 La méthode de résolution heuristique suivante est développée. Tant que l'on ne trouve pas de coupe violée, on teste les combinaisons de plus en plus grande d'inégalité.
-\subsection{Résultat}
+De plus les données sont pré-traitées afin d'accélérer la vitesse de résolution.
+
+\subsection{Résultat et performance des différentes méthodes}
+
+\subsubsection{Résultat du pré-traitement des données}
+
+Les tests ont été réalisés sur tous les noeuds du branch\&cut, sans imposer de violation minimun.
+Les étapes (a) à (c) réduisent la taille de $\overset{\_}{A}$ d'en moyenne 83,2\%, allant de 46,96\% jusqu'à 99,9\%.
+Après applications des étapes (a) à (c), on étudie les résultats des étapes suivantes en fonction de la taille actuelle de la matrice $\overset{\_}{A}$. Les étapes (d) et (e) simplifient le système de 1,26\% et 1,5\% en supprimant respectivement les colonnes unitaires et les lignes nulles qui contiennent une coupe violée et enfin on peut supprimer 40,7\% en supprimant les colonnes identiques.
+On obtient alors en considérant chacune des étapes une simplification de 95,5\% en moyenne.
+Cette simplification est très significative et permet d'accélerer grandement le temps de résolution, et permet de résoudre en moins de 10s des instances qui ne pouvaient sinon pas être résolues en dessous de ce temps.
+
+\subsubsection{Comparaison du nombre de noeuds du branche&cut}
+Un premier élément pour comparer les performances de la coupe $\{0,\frac{1}{2}\}$, et la mesure du nombre de noeuds dans le branch\&cut. Dans cet approche, on compare 3 éléments :
+\begin{itemize}
+    \item Fischetti et Lotti font appel à la coupe de Chvatal-Gomory pour la séparation
+    \item SCIP par défaut
+    \item SCIP en remplaçant le séparateur standard avec la coupe $\{0,\frac{1}{2}\}$, en ajoutant à chaque fois que la coupe la plus violée.
+\end{itemize}
+Par rapport à Fischetti et Lotti, 40\% de coupe en moins sont réalisées. Cependant le SCIP réalise en général plus d'un branch\&cut, on est donc amenée en général à réaliser plus de coupes.
+En considérant la méthode faisant appel au programme linéaire auxiliaire, et en ajoutant les coupes violées ne jouant pas un rôle dans la coupe optimale, on arrive à diminuer de 26\% en général le nombre de noeuds dans le branch\&cut. Cepedant ceux-ci évoluent de moins 84\% à plus 158\%. En outre, on atteint ce résultat en sacrifiant le temps de calcul. En effet on voit une augmentation de plus 158\% au temps de calcul.
+Une telle approche du problème n'est donc pas adaptée, et on va choisir de comparer plutôt le temps CPU.
+
+\subsubsection{Comparaison du temps CPU}
+Afin de mettre en évidence que la résolution faisant appel un programme linéaire auxiliaire n'est pas adaptée, on va comparer le temps de résolution des 3 éléments suivants :
+\begin{itemize}
+    \item le SCIP par défaut
+    \item le SCIP faisant appel au programme linéaire auxiliaire 
+    \item le SCIP faisant appel à la méthode heuristique
+\end{itemize}
 
 \addcontentsline{toc}{chapter}{Bibliographie}
 
