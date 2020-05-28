@@ -162,7 +162,7 @@ $$
 On cherche donc un vecteur u tel que $z(u,x^\ast)>0$.
 Pour cela on définit les éléments suivants :
 $$
-\overset{\_}{A}=A \ mod \ 2, \ \overset{\_}{b}=b \ mod \ 2,\ s = b-Ax^\ast \ge 0
+\overset{\_}{A}=A \ \mbox{mod} \ 2, \ \overset{\_}{b}=b \ \mbox{mod} \ 2,\ s = b-Ax^\ast \ge 0
 $$
 Dans un premier temps, l'auteur démontre le lemme suivant, qui donne une condition nécessaire suffisante quand à l'existence d'une coupe :
 \newline
@@ -175,7 +175,7 @@ Pour démontrer ce lemme, il faut développer l'expression de $z(u,x^\ast)$:
 \begin{equation}
 \begin{split}
 z(u,x^\ast) & =\lfloor u^TA \rfloor x^\ast-\lfloor u^Tb \rfloor \\
- & = \frac{1}{2}((2u^T)\overset{\_}{b}\ mod\ 2) -v^Ts-\frac{1}{2}((2u^T\overset{\_}{A}\ mod \ 2)x^\ast)
+ & = \frac{1}{2}((2u^T)\overset{\_}{b}\ \mbox{mod}\ 2) -v^Ts-\frac{1}{2}((2u^T\overset{\_}{A}\ \mbox{mod} \ 2)x^\ast)
 \end{split}
 \end{equation}
 En posant $v=2u$, et en remarquant que tous les termes de la différences sont positifs, on en déduit les conditions précédentes.
@@ -237,6 +237,21 @@ Avant de mettre en place la recherche de coupe, un pré-traitement des données 
 \end{itemize}
 Enfin à chaque étape on prend le soin de supprimer les colonnes et lignes nulles, ainsi que les lignes de slack supérieure à 1 dans $(\overset{\_}{A},\overset{\_}{b})$.
 
+\subsection{Pré-traitement des données dans le cadre du set cover}
+
+Dans le cadre du set-cover les opérations de simplification énoncées plus haut peuvent être adaptées. En effet, ici la matrice $-A$ est binaire et tous les éléments de $b$ sont égaux à $-1$. Ainsi, on peut initialiser $\overset{\_}{A}$ et $\overset{\_}{b}$ de la manière suivante :
+$$
+\overset{\_}{A}=-A, \ \mbox{et} \ \overset{\_}{b}=-b
+$$
+Les éléments de la proposition 3 s'adaptent alors de la manière suivante :
+\begin{itemize}
+    \item (ii) lors de la première itération il n'y a pas de ligne nulle dans $(\overset{\_}{A},\overset{\_}{b})$ de par la définition de $b$, mais aussi parce qu'une ligne nulle dans A (et donc dans $\overset{\_}{A}$) correspondrait à un élément non couvert par les sous-ensembles de S. Le problème de set-cover ne pourrait alors pas être résolu. Il n'est donc pas nécessaire de considérée cette simplification lors de la première itération.
+    \item (iii) de la même manière, il n'y a pas de colonne de zéro dans $A$, cela correspondrait à un sous-ensemble de S vide, et il serait inutile de prendre en compte un tel ensemble.
+    \item (vi) lors de la première itération $s_j\le1$, on peut donc se contenter de vérifier la condition $s_j=1$.
+\end{itemize}
+Cependant après application de la proposition 5, on n'est pas sur de conserver ces propriétés de $(\overset{\_}{A},\overset{\_}{b})$ ainsi que sur le vecteur de slack $s$. Il est donc toujours nécessaire de supprimer les colonnes et lignes nulles, ainsi que les lignes de slack supérieure`a 1 dans (A,b).
+
+
 \subsection{Méthode avec un programme linéaire}
 Une première approche peut-être de modéliser le problème de coupe par un système linéaire de la forme suivante :
 $$
@@ -276,7 +291,7 @@ Un premier élément pour comparer les performances de la coupe $\{0,\frac{1}{2}
     \item SCIP par défaut
     \item SCIP en remplaçant le séparateur standard avec la coupe $\{0,\frac{1}{2}\}$ en ajoutant à chaque fois que la coupe la plus violée.
 \end{itemize}
-Par rapport à Fischetti et Lotti, 40\% de coupe en moins sont réalisées. Cependant SCIP réalise en général plus d'un branch\&cut, on est donc amené en général à réaliser plus de coupes.
+Par rapport à Fischetti et Lotti, 40\% de coupe en moins sont réalisées. Cependant SCIP réalise en général plus d'un noeud dans le\textit{branch-and-cut}, on est donc amené en général à réaliser plus de coupes.
 En considérant la méthode faisant appel au programme linéaire auxiliaire, et en ajoutant les coupes violées ne jouant pas un rôle dans la coupe optimale, on arrive à diminuer de 26\% en général le nombre de noeuds dans le \textit{branch-and-cut}. Cependant on atteint ce résultat en sacrifiant le temps de calcul, et en outre on observe une augmentation du nombre noeuds dans certain cas. En effet on voit une augmentation de plus 158\% au temps de calcul.
 Une telle évaluation du problème n'est donc pas adaptée. On va choisir de comparer plutôt le temps CPU.
 
@@ -299,5 +314,3 @@ On remarque bien que la résolution heuristique semble la plus adaptée.
 \bibliography{bibliography}
 
 \end{document}
-
-
