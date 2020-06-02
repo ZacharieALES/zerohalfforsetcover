@@ -556,7 +556,7 @@ function pretraitement(A::Array{Int, 2}, b::Array{Int, 1}, x::Array{Float64, 1},
  	    end
 	end
 
-    return(A_barre, b_barre, x_barre, coupe, indice, s)
+    return A_barre, b_barre, x_barre, coupe, indice, s
 end
 
 

@@ -30,7 +30,7 @@ function testCallback(cb_data)
     end
 
     # On effectue le pretraitement des matrices A, b à partir de la solution continue x_sol
-    [A_barre, b_barre, x_barre, coupe, indice, s] = pretraitement(A, b, x_sol, eps)
+    A_barre, b_barre, x_barre, coupe, indice, s = pretraitement(A, b, x_sol, eps)
     
     m_barre = size(A_barre)[1]
     n_barre = size(b_barre)[1]
