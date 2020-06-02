@@ -363,7 +363,7 @@ function pretraitement(A::Array{Int, 2}, b::Array{Int, 1}, x::Array{Float64, 1},
 	        ub_abs = floor(ub)
 	        for i in 1:n
 
- 		        uA_abs[1, i] = floor(uA[1, i])
+ 		        uA_abs[i] = floor(uA[i])
 
  	        end
             
