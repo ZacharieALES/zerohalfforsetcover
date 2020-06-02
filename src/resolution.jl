@@ -20,7 +20,7 @@ function testCallback(cb_data)
     s = Array{Float64}
     uA = Array{Int64}(undef, 1, n)
     uA_abs = Array{Int64}(undef, 1, n)
-    u = zeros(float64, m)
+    u = zeros(Float64, m)
 
     # On initialise la valeur de x_sol
     for i in 1:n
@@ -143,7 +143,7 @@ function testCallback(cb_data)
         con = @build_constraint(sum(uA_abs[i] * x[i] for i in 1:n) <= ub_abs)
 
         # On l'ajoute au problème
-        MOI.submit(m, MOI.UserCut(cb_data), con)
+        MOI.submit(model, MOI.UserCut(cb_data), con)
 
         # On met à jour A et b 
         A = hcat(A, uA_abs[j])
@@ -165,10 +165,10 @@ Sortie:
 - getsolvetime(m) : le temps de résolution en seconde
 """
 
-function cplexSolve(A::Array{Int,2}, b::Array{Int,1} = Array{Int64}(undef,0), eps::Array{Int,1} = [0.0001; 0])
+function cplexSolve(A::Array{Int,2}, b::Array{Int,1} = Array{Int64}(undef,0), k::Int64 = 1,  eps::Array{Float64,1} = [0.0001; 0])
 
     m = size(A)[1]
-    n = size(b)[2]
+    n = size(A)[2]
 
     # Si b n'est pas renseigné, on l'initialise
     if size(b)[1] == 0
@@ -178,24 +178,32 @@ function cplexSolve(A::Array{Int,2}, b::Array{Int,1} = Array{Int64}(undef,0), ep
     end
 
     # Définition du problème
-    m = Model(CPLEX.Optimizer)
-    @variable(m, x[i in 1:n], Bin) 
-    @constraint(m, [i in 1:m], sum(x[j] for j in 1:n if A[i, j] == 1) <= b[i]) 
-    @objective(m, Min, sum(x[i] for i in 1:n))
+    model = Model(CPLEX.Optimizer)
+    @variable(model, x[i in 1:n], Bin) 
+    @constraint(model, [i in 1:m], sum(-x[j] for j in 1:n if A[i, j] == -1) <= b[i]) 
+    @objective(model, Min, sum(x[i] for i in 1:n))
 
     # Ajout du callback
-    MOI.set(m, MOI.UserCutCallback(), testCallback)
+    MOI.set(model, MOI.UserCutCallback(), testCallback)
     
     # Start a chronometer
     start = time()    
 
-    optimize!(m)
+    optimize!(model)
+
+    # Affichage de la solution
+    print("\nSolution obtenue")
+    for i in 1:n
+
+        println("x[", i, "] = ", JuMP.value(x[i]))   
+
+    end
 
     # Return:
     # 1 - true si un optimum est trouvé
     # 2 - la valeur associée à chaque sous-ensemble
     # 3 - le temps de resolution
-    return JuMP.primal_status(m) == JuMP.MathOptInterface.FEASIBLE_POINT, x, time() - start
+    return JuMP.primal_status(model) == JuMP.MathOptInterface.FEASIBLE_POINT, x, time() - start
 end
 
 
