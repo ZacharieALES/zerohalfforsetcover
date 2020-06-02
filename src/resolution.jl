@@ -153,6 +153,49 @@ function testCallback(cb_data)
 
 end
 
+"""
+Résouds une instance en faisant appel aux coupes {0,1/2}
 
+Arguments:
+- A :  matrice de taille m*n, avec A[i, j] = -1 si le ieme elements est couvert par le jeme sous ensemble
+
+Sortie:
+- status : optimal si le probleme est résolu de façon optimale
+- x : vecteur d'entier de taille n, avec x[i] = 1 si le ieme sous ensemble est actif dans la solution
+- getsolvetime(m) : le temps de résolution en seconde
+"""
+
+function cplexSolve(A::Array{Int,2}, b::Array{Int,1} = Array{Int64}(undef,0), eps::Array{Int,1} = [0.0001; 0])
+
+    m = size(A)[1]
+    n = size(b)[2]
+
+    # Si b n'est pas renseigné, on l'initialise
+    if size(b)[1] == 0
+
+        b = -ones(Int64, m)
+    
+    end
+
+    # Définition du problème
+    m = Model(CPLEX.Optimizer)
+    @variable(m, x[i in 1:n], Bin) 
+    @constraint(m, [i in 1:m], sum(x[j] for j in 1:n if A[i, j] == 1) <= b[i]) 
+    @objective(m, Min, sum(x[i] for i in 1:n))
+
+    # Ajout du callback
+    MOI.set(m, MOI.UserCutCallback(), testCallback)
+    
+    # Start a chronometer
+    start = time()    
+
+    optimize!(m)
+
+    # Return:
+    # 1 - true si un optimum est trouvé
+    # 2 - la valeur associée à chaque sous-ensemble
+    # 3 - le temps de resolution
+    return JuMP.primal_status(m) == JuMP.MathOptInterface.FEASIBLE_POINT, x, time() - start
+end
 
 
