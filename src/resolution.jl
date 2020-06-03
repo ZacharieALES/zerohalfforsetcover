@@ -1,6 +1,7 @@
 using JuMP
 using CPLEX
 include("pretraitement.jl")
+include("generation.jl")
 
 """
 Definition du callback
@@ -15,10 +16,10 @@ function testCallback(cb_data)
     A_barre = Array{Int64}
     b_barre = Array{Int64}
     x_barre = Array{Float64}
-    coupe = Array{Float64}
+    coupe = Array{Float64}(undef, 0, m)
     indice = Array{Array{Int64}}
     s = Array{Float64}
-    uA = Array{Int64}(undef, 1, n)
+    uA = Array{Float64}(undef, 1, n)
     uA_abs = Array{Int64}(undef, 1, n)
     u = zeros(Float64, m)
 
@@ -30,29 +31,29 @@ function testCallback(cb_data)
     end
 
     # On effectue le pretraitement des matrices A, b à partir de la solution continue x_sol
-    A_barre, b_barre, x_barre, coupe, indice, s = pretraitement(A, b, x_sol, eps)
-    
+    A_barre, b_barre, x_barre, coupe, indice, s = pretraitement(A, b, x_sol, epsilon)
     m_barre = size(A_barre)[1]
     n_barre = size(b_barre)[1]
-
-
+    k = 2
     # On fait une recherche pour les coupes suivantes.
     # On ne considère pas le cas k=1, car on a déjà traité les partitions de tailles 1
-    if k > 1
+    while size(coupe)[1] == 0 && k != m_barre 
             
         for count_k in 2:k
 
             # On initialise un vecteur qui va nous permettre de compter les itérations, ainsi que le décalage sur chaque itération
             count = Array{Int64}(undef, count_k)
             decalage = Array{Int64}(undef, count_k)
+
             for i in 1:count_k
 
                 count[i] = i
-                decalage[i] = 1
+                decalage[i] = i
+
             end
                 
             # Tant que l'on a pas étudier toutes les partitions de taille count_k
-            while count[count_k - 1] != m
+            while decalage[count_k ] != m_barre + 1
 
                 # On calcule u à partir des éléments de la partitions
 
@@ -60,10 +61,10 @@ function testCallback(cb_data)
                 u = zeros(Float64, m)
 
                 # On récupère les indices des inégalités concernées
-                indice_ine = indice[count_k[1]]
+                indice_ine = indice[count[1]]
                 for i in 2:count_k
 
-                    indice_ine = vcat(indice_ine, indice[count_k[i]])
+                    indice_ine = vcat(indice_ine, indice[count[i]])
 
                 end
                     
@@ -95,10 +96,10 @@ function testCallback(cb_data)
 
  	            end
                     
-                # Si la fonction de violation est supérieure à eps[2], on ajoute la coupe
-                if (uA_abs * x_sol)[1] - ub_abs > eps[2]
+                # Si la fonction de violation est supérieure à epsilon[2], on ajoute la coupe
+                if (uA_abs * x_sol)[1] - ub_abs > epsilon[2]
 
-                    coupe = hcat(coupe, u)
+                    coupe = vcat(coupe, transpose(u))
                     
                 end    
 
@@ -109,7 +110,7 @@ function testCallback(cb_data)
                 # On propage l'incrementation
                 for i in 0:count_k-2
                         
-                    if count[count_k - i] == m - i + 1
+                    if count[count_k - i] == m_barre - i + 1
 
                         count[count_k - i] = decalage[count_k - i] + 1
                         count[count_k - i - 1] = count[count_k - i - 1] + 1
@@ -119,6 +120,9 @@ function testCallback(cb_data)
                 end
             end
         end
+
+        k = k + 1
+
     end    
 
     # Pour chaque coupe, on ajoute l'inégalité correspondante. On les ajoute également à A et b
@@ -127,8 +131,10 @@ function testCallback(cb_data)
     for j in 1:nb_coupe
 
         # On calcule uA et ub correspondant
-        uA = transpose(coupe[j, :]) * A
-        ub = transpose(coupe[j, :]) * b
+        for i in 1:n
+            uA[i] = sum(coupe[j, k] * A[k, i] for k in 1:m)
+        end
+        ub = sum(coupe[j, k] * b[k] for k in 1:m)
 
         # On calcule abs(uA) et abs(ub)
         ub_abs = floor(ub)
@@ -146,8 +152,10 @@ function testCallback(cb_data)
         MOI.submit(model, MOI.UserCut(cb_data), con)
 
         # On met à jour A et b 
-        A = hcat(A, uA_abs[j])
-        b = hcat(b, ub_abs)
+        A = vcat(A, uA_abs)
+        b = vcat(b, ub_abs)
+        global A
+        global b
     
     end
 
@@ -165,17 +173,22 @@ Sortie:
 - getsolvetime(m) : le temps de résolution en seconde
 """
 
-function cplexSolve(A::Array{Int,2}, b::Array{Int,1} = Array{Int64}(undef,0), k::Int64 = 1,  eps::Array{Float64,1} = [0.0001; 0])
-
+# function cplexSolve(A::Array{Int,2}, b::Array{Int,1} = Array{Int64}(undef,0),  epsilon::Array{Float64,1} = [0.0001; 0])
+    A = generateInstance(50,30,0.3) 
+    global A
     m = size(A)[1]
     n = size(A)[2]
+    b = -ones(Int64, m)
+    global b
+    epsilon = [0.0001; 0]
+    global epsilon
 
-    # Si b n'est pas renseigné, on l'initialise
-    if size(b)[1] == 0
+    # # Si b n'est pas renseigné, on l'initialise
+    # if size(b)[1] == 0
 
-        b = -ones(Int64, m)
+    #     b = -ones(Int64, m)
     
-    end
+    # end
 
     # Définition du problème
     model = Model(CPLEX.Optimizer)
@@ -192,7 +205,7 @@ function cplexSolve(A::Array{Int,2}, b::Array{Int,1} = Array{Int64}(undef,0), k:
     optimize!(model)
 
     # Affichage de la solution
-    print("\nSolution obtenue")
+    print("\nSolution obtenue \n")
     for i in 1:n
 
         println("x[", i, "] = ", JuMP.value(x[i]))   
@@ -204,6 +217,6 @@ function cplexSolve(A::Array{Int,2}, b::Array{Int,1} = Array{Int64}(undef,0), k:
     # 2 - la valeur associée à chaque sous-ensemble
     # 3 - le temps de resolution
     return JuMP.primal_status(model) == JuMP.MathOptInterface.FEASIBLE_POINT, x, time() - start
-end
+# end
 
 

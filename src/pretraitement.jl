@@ -8,7 +8,7 @@ Argument
 - A: matrice de taille m*n d'entier relatif
 - b: vecteur de taille m d'entier relatif
 - x: vecteur de taille n de flottant
-- eps: tableau contenant les differentes précisions
+- epsilon: tableau contenant les differentes précisions
 - indice_entre: contient les coefficiants des combinaisons lineaire correspondant à chaque inégalité
 
 Sortie
@@ -20,7 +20,7 @@ Sortie
 - coupe: matrice à n colonnes contenant aux premières coupes  
 """
 
-function pretraitement(A::Array{Int, 2}, b::Array{Int, 1}, x::Array{Float64, 1}, eps::Array{Float64, 1}, indice_entre::Array{Array{Int64}} = Array{Array{Int64}}(undef, 0))
+function pretraitement(A::Array{Int, 2}, b::Array{Float64, 1}, x::Array{Float64, 1}, epsilon::Array{Float64, 1}, indice_entre::Array{Array{Int64}} = Array{Array{Int64}}(undef, 0))
 
     m = size(A)[1]
     n = size(A)[2]
@@ -84,8 +84,8 @@ function pretraitement(A::Array{Int, 2}, b::Array{Int, 1}, x::Array{Float64, 1},
     # # On parcourt les colonne de A_barre
     while count_j != n_barre + 1 
 
-        # si x[j] < eps[1], on supprime la colonne correspondante, ainsi que les colonnes nulles 
-	    if x_barre[count_j] < eps[1] || sum(A_barre[:,count_j]) == 0
+        # si x[j] < epsilon[1], on supprime la colonne correspondante, ainsi que les colonnes nulles 
+	    if x_barre[count_j] < epsilon[1] || sum(A_barre[:,count_j]) == 0
 
  	        A_barre = A_barre[:, setdiff(1:end, count_j)]
 	        x_barre = x_barre[setdiff(1:end, count_j)]
@@ -164,7 +164,7 @@ function pretraitement(A::Array{Int, 2}, b::Array{Int, 1}, x::Array{Float64, 1},
 
  			                # On met à jour Rj
 			                n_i = size(indice[count_i])[1]
-                            print(n_i,"\n")
+
 			                # On parcours les éléments de Ri
 			                for h in 1:n_i
 
@@ -173,7 +173,7 @@ function pretraitement(A::Array{Int, 2}, b::Array{Int, 1}, x::Array{Float64, 1},
                                 enlever = false
  			                    # On parcours les elements de Rj tant que l'on a pas trouver d'élément à supprimer
 			                    while count_j != n_j + 1 && enlever == false
-                                    # print(count_j,"\n")
+
  				                    # Si un element de Ri est dans Rj, on le supprime de Rj
 				                    if indice[count_i][h] == indice[j][count_j]
 
@@ -333,7 +333,7 @@ function pretraitement(A::Array{Int, 2}, b::Array{Int, 1}, x::Array{Float64, 1},
 	end
 
 
-   # On cherche les coupes associées aux lignes telles que b_barre = 1, et la fonction de violation est supérieure à eps[2]
+   # On cherche les coupes associées aux lignes telles que b_barre = 1, et la fonction de violation est supérieure à epsilon[2]
 
    count_i = 1
    n_i = 1	
@@ -367,11 +367,10 @@ function pretraitement(A::Array{Int, 2}, b::Array{Int, 1}, x::Array{Float64, 1},
 
  	        end
             
-	        # Si la fonction de violation est supérieure à eps, on ajoute la coupe et on supprime la ligne
-	        if (uA_abs * x)[1] - ub_abs > eps[2]
-                print(coupe,"\n")
-                print(u,"\n")
-                coupe = vcat(coupe, u)
+	        # Si la fonction de violation est supérieure à epsilon, on ajoute la coupe et on supprime la ligne
+	        if (uA_abs * x)[1] - ub_abs > epsilon[2]
+
+                coupe = vcat(coupe, transpose(u))
 	            A_barre = A_barre[setdiff(1:end, count_i), :]
 	            b_barre = b_barre[setdiff(1:end, count_i)]
 	            s = s[setdiff(1:end, count_i)]
@@ -458,7 +457,7 @@ function pretraitement(A::Array{Int, 2}, b::Array{Int, 1}, x::Array{Float64, 1},
 				
 				# On vérifie que cette ligne n'a pas été traitée
 				if done[count_j] != 1		 
-					print(count_j,"\n")
+
  		    		# On verifie si les deux lignes sont identiques
 		    		if sum(A_barre[count_i, :] - A_barre[count_j, :]) == 0 && b_barre[count_i] == b_barre[count_j]
 
