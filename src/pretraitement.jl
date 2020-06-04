@@ -20,7 +20,7 @@ Sortie
 - coupe: matrice à n colonnes contenant aux premières coupes  
 """
 
-function pretraitement(A::Array{Int, 2}, b::Array{Float64, 1}, x::Array{Float64, 1}, epsilon::Array{Float64, 1}, indice_entre::Array{Array{Int64}} = Array{Array{Int64}}(undef, 0))
+function pretraitement(A::Array{Float64, 2}, b::Array{Float64, 1}, x::Array{Float64, 1}, epsilon::Array{Float64, 1}, indice_entre::Array{Array{Int64}} = Array{Array{Int64}}(undef, 0))
 
     m = size(A)[1]
     n = size(A)[2]

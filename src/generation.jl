@@ -9,8 +9,8 @@ Argument
 
 function generateInstance(m::Int64, n::Int64, density::Float64)
 
-    t = Array{Int64}(undef, m, n)
-    t = zeros(Int64, m, n)
+    t = Array{Float64}(undef, m, n)
+    t = zeros(Float64, m, n)
     count = 0
 
     # Tant que l'on a as remplis assez de case
