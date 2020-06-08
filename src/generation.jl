@@ -1,5 +1,6 @@
 include("instance.jl")
 
+
 """
 Genere un grille de taille p*n à partir d'une densité donnée
 
@@ -43,4 +44,33 @@ function generateInstance(m::Int64, n::Int64, density::Float64)
 
     instance = Instance(t)
     return(instance)
+end
+
+"""
+Generation de toutes les instances
+
+"""
+
+function generateDataSet()
+
+    # Pour chaque nombre de ligne
+    for i in [6, 10, 20, 30, 35]
+
+        # Pour chaque nombre de colonne
+        for j in [5, 10, 20, 25, 30]
+
+            # Pour chaque densité considérée
+            for density in [ 0.3, 0.4, 0.75]
+
+                # Genere 5 instances
+                for instance in 1:5
+
+                    fileName = "../data/instance_t" * "_i" * string(i) * "_j" * string(j) * "_" * string(density) * "_" * string(instance) * ".txt"
+                    println("--Generating file" * fileName)
+                    saveInstance(generateInstance(i, j, density).A, fileName) 
+
+                end
+            end
+        end
+    end
 end

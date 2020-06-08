@@ -50,8 +50,9 @@ function solveur(A::Array{Float64, 2}, b::Array{Float64, 1}, isRelaxation::Bool 
     return x_sol
 end    
 
-function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1} = Array{Float64}(undef, 0), epsilon_entree::Array{Float64, 1} = [0.0001; 0.0001])
+function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1} = Array{Float64}(undef, 0), epsilon_entree::Array{Float64, 1} = [0.0001; 0])
 
+    start = time()
     # Definition des données du problème
     A = A_entree
     global A
@@ -307,14 +308,16 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
     #     println("x[", i, "] = ", bestSol[i])   
 
     # end
-
+    isOptimal = false
     if entier
 
         println("L'algorithme s'est arreté car la solution est entière")
-
+        isOptimal = true
     elseif !Excoupe 
 
         println("L'algorithme s'est arreté car il n'a pas trouvé de coupe")
 
     end
+    
+    return isOptimal, x, time()-start
 end
