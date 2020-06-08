@@ -169,16 +169,19 @@ function testCallback(cb_data)
 
 end
 
+function resolution(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1} = Array{Float64}(undef, 0), epsilon_entree::Array{Float64, 1} = [0.0001; 0.0001])
 
-    A = generateInstance(50,30,0.3).A 
-    # A=-[0.0 1 0 0 1 0 0 1; 1 0 0 0 0 1 1 0; 0 1 0 0 0 1 1 0; 1 1 1 0 0 0 0 1;0 0 1 0 1 0 0 0 ; 1 1 1 1 0 0 1 0; 0 1 0 0 1 0 0 0; 0 0 0 0 1 1 1 0; 0 0 1 0 0 1 1 1; 0 1 1 0 0 0 1 1]
-
+    A = A_entree
     global A
     m = size(A)[1]
     n = size(A)[2]
-    b = -ones(Float64, m)
+    if size(b_entree)[1] == 0
+        b = -ones(Float64, m)
+    else
+        b = b_entree
+    end
     global b
-    epsilon = [0.0001; 0]
+    epsilon = epsilon_entree
     global epsilon
 
     # Définition du problème
@@ -208,6 +211,7 @@ end
     # 2 - la valeur associée à chaque sous-ensemble
     # 3 - le temps de resolution
     return JuMP.primal_status(model) == JuMP.MathOptInterface.FEASIBLE_POINT, x, time() - start
+end
 
 
 
