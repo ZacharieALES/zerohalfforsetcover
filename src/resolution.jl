@@ -2,6 +2,7 @@ using JuMP
 using CPLEX
 include("pretraitement.jl")
 include("generation.jl")
+include("instance.jl")
 
 """
 Definition du callback
@@ -34,12 +35,12 @@ function testCallback(cb_data)
     A_barre, b_barre, x_barre, coupe, indice, s = pretraitement(A, b, x_sol, epsilon)
     m_barre = size(A_barre)[1]
     n_barre = size(b_barre)[1]
-    k = 2
+    k = 1
     # On fait une recherche pour les coupes suivantes.
     # On ne considère pas le cas k=1, car on a déjà traité les partitions de tailles 1
     while size(coupe)[1] == 0 && k != m_barre 
             
-        for count_k in 2:k
+        for count_k in 1:k
 
             # On initialise un vecteur qui va nous permettre de compter les itérations, ainsi que le décalage sur chaque itération
             count = Array{Int64}(undef, count_k)
@@ -107,10 +108,17 @@ function testCallback(cb_data)
                 # On incremente de 1 le dernier compteur
                 count[count_k] = count[count_k] + 1
 
+                # On gère le cas ou count_k = 1 e tque l'on a parcouru toute la matrice
+                if count_k == 1 &&  count[1] == m_barre + 1
+
+                    decalage = m_barre + 1
+
+                end    
+
                 # On propage l'incrementation
                 for i in 0:count_k-2
                         
-                    if count[count_k - i] == m_barre - i + 1
+                    if count[count_k - i] == m_barre - i + 1 && count_k != 1
 
                         count[count_k - i] = decalage[count_k - i] + 1
                         count[count_k - i - 1] = count[count_k - i - 1] + 1
@@ -162,7 +170,9 @@ function testCallback(cb_data)
 end
 
 
-    A = generateInstance(50,30,0.3) 
+    A = generateInstance(50,30,0.3).A 
+    # A=-[0.0 1 0 0 1 0 0 1; 1 0 0 0 0 1 1 0; 0 1 0 0 0 1 1 0; 1 1 1 0 0 0 0 1;0 0 1 0 1 0 0 0 ; 1 1 1 1 0 0 1 0; 0 1 0 0 1 0 0 0; 0 0 0 0 1 1 1 0; 0 0 1 0 0 1 1 1; 0 1 1 0 0 0 1 1]
+
     global A
     m = size(A)[1]
     n = size(A)[2]

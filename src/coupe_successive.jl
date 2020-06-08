@@ -2,6 +2,7 @@ using JuMP
 using CPLEX
 include("pretraitement.jl")
 include("generation.jl")
+include("instance.jl")
 
 """
 Fonction qui resoud le problème linaire ou sa relaxation continue
@@ -50,7 +51,8 @@ function solveur(A::Array{Float64, 2}, b::Array{Float64, 1}, isRelaxation::Bool 
 end    
 
 # Definition des données du problème
-A = generateInstance(50,30,0.3) 
+A = generateInstance(35,25,0.30).A
+# A=-[0.0 1 0 0 1 0 0 1; 1 0 0 0 0 1 1 0; 0 1 0 0 0 1 1 0; 1 1 1 0 0 0 0 1;0 0 1 0 1 0 0 0 ; 1 1 1 1 0 0 1 0; 0 1 0 0 1 0 0 0; 0 0 0 0 1 1 1 0; 0 0 1 0 0 1 1 1; 0 1 1 0 0 0 1 1]
 global A
 m = size(A)[1]
 global m
@@ -58,9 +60,10 @@ n = size(A)[2]
 b = -ones(Float64, m)
 global b
 coupe = Array{Float64}(undef, 1, m)
-epsilon = [0.0001; 0.001]
+epsilon = [0.0001; 0.0001]
 global epsilon
 x = Array{Float64}(undef, n)
+# bestSol = Array{Float64}(undef, n)
 A_barre = Array{Int64}
 b_barre = Array{Int64}
 x_barre = Array{Float64}
@@ -74,6 +77,18 @@ u = zeros(Float64, m)
 # On applique le solveur
 x = solveur(A, b)
 global x
+# BestSol = x
+# global BestSol
+# nbZero = 0
+# global nbZero
+
+# for i in 1:n
+#     if abs(BestSol[i]) <= epsilon[1]
+#         nbZero = nbZero + 1
+#         global nbZero
+#     end
+# end
+
 
 # On verifie si la solution est entière
 entier = true
@@ -91,28 +106,27 @@ end
 
 Excoupe = true
 global Excoupe
+start = time()
 # Tant que la solution n'est pas entière et que l'on trouve des coupes
-while !entier && Excoupe
-
+while !entier && Excoupe && time()-start <= 100
     # On met à jour la taille de A
     m = size(A)[1]
     global m
 
     Excoupe = false
     global Excoupe
-    println("hi")
     # On calcule de nouvelle coupe
     # On effectue le pretraitement des matrices A, b à partir de la solution continue x_sol
     A_barre, b_barre, x_barre, coupe, indice, s = pretraitement(A, b, x, epsilon)
     m_barre = size(A_barre)[1]
     n_barre = size(b_barre)[1]
-    k = 2
+    k = 1
 
     # On fait une recherche pour les coupes suivantes.
     # On ne considère pas le cas k=1, car on a déjà traité les partitions de tailles 1
     while size(coupe)[1] == 0 && k != m_barre 
                 
-        for count_k in 2:k
+        for count_k in 1:k
     
             # On initialise un vecteur qui va nous permettre de compter les itérations, ainsi que le décalage sur chaque itération
             count = Array{Int64}(undef, count_k)
@@ -179,11 +193,18 @@ while !entier && Excoupe
                 # On passe à la partition suivantes
                 # On incremente de 1 le dernier compteur
                 count[count_k] = count[count_k] + 1
-    
+                
+                # On gère le cas ou count_k = 1 e tque l'on a parcouru toute la matrice
+                if count_k == 1 &&  count[1] == m_barre + 1
+
+                    decalage = m_barre + 1
+
+                end    
+
                 # On propage l'incrementation
                 for i in 0:count_k-2
                             
-                    if count[count_k - i] == m_barre - i + 1
+                    if count[count_k - i] == m_barre - i + 1 && count_k != 1
     
                         count[count_k - i] = decalage[count_k - i] + 1
                         count[count_k - i - 1] = count[count_k - i - 1] + 1
@@ -196,41 +217,43 @@ while !entier && Excoupe
         
         k = k + 1  
 
-        # Pour chaque coupe, on ajoute l'inégalité correspondante. On les ajoute également à A et b
-        nb_coupe = size(coupe)[1]
-    
-        if nb_coupe != 0
-
-            Excoupe = true
-            global Excoupe
-
-        end    
-
-        for j in 1:nb_coupe
-    
-            # On calcule uA et ub correspondant
-            for i in 1:n
-                uA[i] = sum(coupe[j, k] * A[k, i] for k in 1:m)
-            end
-            ub = sum(coupe[j, k] * b[k] for k in 1:m)
-    
-            # On calcule abs(uA) et abs(ub)
-            ub_abs = floor(ub)
-    
-            for i in 1:n
-    
-                uA_abs[i] = floor(uA[i])
-    
-            end
-    
-            # On met à jour A et b 
-            A = vcat(A, uA_abs)
-            global A
-            b = vcat(b, ub_abs)
-            global b
-        
-        end
     end
+
+    # Pour chaque coupe, on ajoute l'inégalité correspondante. On les ajoute également à A et b
+    nb_coupe = size(coupe)[1]
+    
+    if nb_coupe != 0
+
+        Excoupe = true
+        global Excoupe
+
+    end    
+
+    for j in 1:nb_coupe
+            
+        # On calcule uA et ub correspondant
+        for i in 1:n
+            uA[i] = sum(coupe[j, k] * A[k, i] for k in 1:m)
+        end
+        ub = sum(coupe[j, k] * b[k] for k in 1:m)
+    
+        # On calcule abs(uA) et abs(ub)
+        ub_abs = floor(ub)
+    
+        for i in 1:n
+    
+            uA_abs[i] = floor(uA[i])
+    
+        end
+    
+        # On met à jour A et b 
+        A = vcat(A, uA_abs)
+        global A
+        b = vcat(b, ub_abs)
+        global b
+        
+    end
+
 
     # On calcule la nouvelle solution de la relaxation avec les coupes
     x = solveur(A, b)
@@ -238,6 +261,20 @@ while !entier && Excoupe
     entier = true
     global entier
 
+    # On regarde si la solution est meilleurs que la solution conservée
+    # nbZeroX = 0
+    # for i in 1:n
+    #     if abs(x[i]) <= epsilon[1]
+    #         nbZeroX = nbZeroX + 1
+    #     end
+    # end
+    
+    # if nbZeroX > nbZero
+    #     bestSol = x
+    #     global bestSol
+    #     nbZero = nbZeroX
+    #     global nbZero
+    # end
 
     # On verifie si la solution est entière
     for i in 1:n
@@ -258,6 +295,13 @@ for i in 1:n
     println("x[", i, "] = ", x[i])   
 
 end
+
+# print("\nMeilleures solution de la relaxation obtenue \n")
+# for i in 1:n
+
+#     println("x[", i, "] = ", bestSol[i])   
+
+# end
 
 if entier
 

@@ -1,3 +1,5 @@
+include("instance.jl")
+
 """
 Genere un grille de taille p*n à partir d'une densité donnée
 
@@ -39,5 +41,6 @@ function generateInstance(m::Int64, n::Int64, density::Float64)
         end
     end
 
-    return(t)
+    instance = Instance(t)
+    return(instance)
 end

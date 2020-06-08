@@ -1,5 +1,5 @@
 # Ce fichier contient la methode de prétraitement des données 
-
+include("instance.jl")
 
 """
 Procède à la simplification de la matrice A de taille n*m et b de taille m
@@ -56,7 +56,7 @@ function pretraitement(A::Array{Float64, 2}, b::Array{Float64, 1}, x::Array{Floa
 	        A_barre[i, j] = mod(A[i, j], 2)
 
         end
-    end
+	end
     x_barre = x
 
     # On initialise le vecteur u
@@ -131,18 +131,21 @@ function pretraitement(A::Array{Float64, 2}, b::Array{Float64, 1}, x::Array{Floa
     # Tant que l'on a pas fait une itération sans apporter de modification
     while modif == true
    
-	# On initialise modif à chaque début de tour de boucle
+		# On initialise modif à chaque début de tour de boucle
         modif = false
+		count_i = 1
 
         # On parcours les lignes
         while count_i != m_barre + 1 && modif == false
+
+			count_k = 1
 
             # On parcours les colonnes
             while count_k != n_barre + 1 && modif == false
 
  	            # Si A_barre[i,k] == 1 et s[i] == 0 on supprime la colonne k, on pose s[i] = x[k] et on ajoute la ligne i de A au autre ligne telle que A[j,k] == 1
-	            if A_barre[count_i, count_k] == 1 && s[count_i] == 0
-			
+				if A_barre[count_i, count_k] == 1 && abs(s[count_i]) <= epsilon[1] && size(A_barre)[2] != 1
+					
                     # On retient que l'on a apporté une modification
 		            modif = true		    
 
@@ -208,7 +211,7 @@ function pretraitement(A::Array{Float64, 2}, b::Array{Float64, 1}, x::Array{Floa
 		            x_barre = x_barre[setdiff(1:end, count_k)]
 		            n_barre = n_barre - 1
 
-                 else
+                else
                     
                     count_k = count_k + 1
                     
@@ -244,7 +247,7 @@ function pretraitement(A::Array{Float64, 2}, b::Array{Float64, 1}, x::Array{Floa
 	    count_j = 1
 	
 	    # On supprime les colonnes nulles
-	    while count_j != n_barre	    
+	    while count_j != n_barre + 1	    
 
  	        if sum(A_barre[:, count_j]) == 0
 
@@ -258,7 +261,6 @@ function pretraitement(A::Array{Float64, 2}, b::Array{Float64, 1}, x::Array{Floa
 
  	        end
 	    end
-
     end
 
  
@@ -317,7 +319,7 @@ function pretraitement(A::Array{Float64, 2}, b::Array{Float64, 1}, x::Array{Floa
 	count_j = 1
 	
 	# On supprime les colonnes nulles
-	while count_j != n_barre	    
+	while count_j != n_barre + 1	    
 
  	    if sum(A_barre[:, count_j]) == 0
 
@@ -347,6 +349,8 @@ function pretraitement(A::Array{Float64, 2}, b::Array{Float64, 1}, x::Array{Floa
  	        # On regarde la valeur de la fonction de violation pour la coupe associée
 	        # On cree le vecteur u de la coupe associée
 	        n_i = size(indice[count_i])[1]
+
+			u = zeros(Float64, m)
 
  	        for j in 1:n_i
 		
@@ -416,7 +420,7 @@ function pretraitement(A::Array{Float64, 2}, b::Array{Float64, 1}, x::Array{Floa
 	count_j = 1
 	
 	# On supprime les colonnes nulles
-	while count_j != n_barre	    
+	while count_j != n_barre + 1    
 
  	    if sum(A_barre[:, count_j]) == 0
 
@@ -540,7 +544,7 @@ function pretraitement(A::Array{Float64, 2}, b::Array{Float64, 1}, x::Array{Floa
 	count_j = 1
 	
 	# On supprime les colonnes nulles
-	while count_j != n_barre	    
+	while count_j != n_barre + 1	    
 
  	    if sum(A_barre[:, count_j]) == 0
 
