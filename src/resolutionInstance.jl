@@ -14,7 +14,7 @@ function solveDataSet()
     dataFolder = "../data/"
     resFolder = "../res/"
 
-    resolutionMethod = ["branchAndBound", "coupeSuccessive"]
+    resolutionMethod = ["branchAndBoundCoupe", "branchAndBound", "coupeSuccessive"]
     resolutionFolder = resFolder .* resolutionMethod
     if !isdir("../res")
         mkdir("../zerohalfforsetcover/res")
@@ -47,32 +47,40 @@ function solveDataSet()
                 resolutionTime = -1
                 isOptimal = false
 
-                # Si on applique le branchandbound
-                if resolutionMethod[methodId] == "branchAndBound"
+                # Si on applique le branchAndBoundCoupe
+                if resolutionMethod[methodId] == "branchAndBoundCoupe"
 
                     # On résouds et on recupère la solution
-                    isOptimal, solution, resolutionTime = resolution(t)
+                    isOptimal, solution, resolutionTime = branchAndBoundCoupe(t)
 
                     # On note la solution
                     if isOptimal
-                        writeSolution(fout, x)
+                        writeSolution(fout, solution)
                     end
 
                 # Si on applique la methode de coupeSuccessive
-                else
+                elseif resolutionMethod[methodId] == "coupeSuccessive"
 
                     isSolved = false
                     solution = []
 
                     isOptimal, solution, resolutionTime = coupeSuccessive(t)
-                    solution
-                end
 
-                print("\n")
+                                    # On ecrit la solution
+                    if isOptimal
+                        writeSolution(fout, solution)
+                    end
                 
-                # On ecrit la solution
-                if isOptimal
-                    writeSolution(fout, solution)
+                elseif resolutionMethod[methodId] == "branchAndBound"   
+                    
+                    isSolved = false
+                    solution = []
+                    isOptimal, solution, resolutionTime = branchAndBound(t)
+                    
+                    # On note la solution
+                    if isOptimal
+                        writeSolution(fout, solution)
+                    end
                 end
 
                 println(fout, "solveTime = ", resolutionTime)

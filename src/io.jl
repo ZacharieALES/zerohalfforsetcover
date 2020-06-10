@@ -122,7 +122,8 @@ Arguments
 function writeSolution(fout::IOStream, t::Array{Float64, 1})
 
     n = size(t)[1]
+    println("Solution : ")
     for i in 1:n
-        println(fout, "x[i] = [",t[i], "]")
+        println(fout, "x[", i, "] = [",t[i], "]")
     end
 end

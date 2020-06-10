@@ -50,24 +50,24 @@ function solveur(A::Array{Float64, 2}, b::Array{Float64, 1}, isRelaxation::Bool 
     return x_sol
 end    
 
-function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1} = Array{Float64}(undef, 0), epsilon_entree::Array{Float64, 1} = [0.0001; 0])
+function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1} = Array{Float64}(undef, 0), epsilon_entree::Array{Float64, 1} = [0.0001; 0.001])
 
     start = time()
     # Definition des données du problème
     A = A_entree
-    global A
+    # global A
     m = size(A)[1]
-    global m
+    # global m
     n = size(A)[2]
     if size(b_entree)[1] == 0
         b = -ones(Float64, m)
     else
         b = b_entree
     end
-    global b
+    # global b
     coupe = Array{Float64}(undef, 1, m)
     epsilon = epsilon_entree
-    global epsilon
+    # global epsilon
     x = Array{Float64}(undef, n)
     # bestSol = Array{Float64}(undef, n)
     A_barre = Array{Int64}
@@ -82,7 +82,7 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
 
     # On applique le solveur
     x = solveur(A, b)
-    global x
+    # global x
     # BestSol = x
     # global BestSol
     # nbZero = 0
@@ -98,29 +98,29 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
 
     # On verifie si la solution est entière
     entier = true
-    global entier
+    # global entier
     for i in 1:n
 
         if abs(x[i] - floor(x[i])) >= epsilon[1]
 
             entier = false
-            global entier
+            # global entier
 
         end
 
     end
 
     Excoupe = true
-    global Excoupe
+    # global Excoupe
     start = time()
     # Tant que la solution n'est pas entière et que l'on trouve des coupes
     while !entier && Excoupe && time()-start <= 100
         # On met à jour la taille de A
         m = size(A)[1]
-        global m
+        # global m
 
         Excoupe = false
-        global Excoupe
+        # global Excoupe
         # On calcule de nouvelle coupe
         # On effectue le pretraitement des matrices A, b à partir de la solution continue x_sol
         A_barre, b_barre, x_barre, coupe, indice, s = pretraitement(A, b, x, epsilon)
@@ -231,7 +231,7 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
         if nb_coupe != 0
 
             Excoupe = true
-            global Excoupe
+            # global Excoupe
 
         end    
 
@@ -254,18 +254,17 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
         
             # On met à jour A et b 
             A = vcat(A, uA_abs)
-            global A
+            # global A
             b = vcat(b, ub_abs)
-            global b
+            # global b
             
         end
 
-
         # On calcule la nouvelle solution de la relaxation avec les coupes
         x = solveur(A, b)
-        global x
+        # global x
         entier = true
-        global entier
+        # global entier
 
         # On regarde si la solution est meilleurs que la solution conservée
         # nbZeroX = 0
@@ -285,10 +284,10 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
         # On verifie si la solution est entière
         for i in 1:n
 
-            if abs(x[i] - floor(x[i])) >= epsilon[1]
+            if abs(x[i] - floor(x[i])) >= epsilon[1] && abs(x[i] - ceil(x[i])) >= epsilon[1]
 
                 entier = false
-                global entier
+                # global entier
 
             end
         end
