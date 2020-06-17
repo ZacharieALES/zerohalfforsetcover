@@ -54,16 +54,16 @@ Generation de toutes les instances
 function generateDataSet()
 
     # Pour chaque nombre de ligne
-    for i in [6, 10, 20, 30, 35]
+    for i in [ 10, 20, 30, 50, 80, 100]
 
         # Pour chaque nombre de colonne
-        for j in [5, 10, 20, 25, 30]
+        for j in [ 10, 20, 30, 50, 80, 100]
 
             # Pour chaque densité considérée
-            for density in [ 0.3, 0.4, 0.75]
+            for density in [0.1, 0.25, 0.5, 0.75, 0.9]
 
                 # Genere 5 instances
-                for instance in 1:5
+                for instance in 1:10
 
                     fileName = "../data/instance_t" * "_i" * string(i) * "_j" * string(j) * "_" * string(density) * "_" * string(instance) * ".txt"
                     println("--Generating file" * fileName)

@@ -79,22 +79,21 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
     uA = Array{Float64}(undef, 1, n)
     uA_abs = Array{Int64}(undef, 1, n)
     u = zeros(Float64, m)
-
+    best_bound = zeros(Float64, n)
+    nb = 0
     # On applique le solveur
     x = solveur(A, b)
-    # global x
-    # BestSol = x
-    # global BestSol
-    # nbZero = 0
-    # global nbZero
 
-    # for i in 1:n
-    #     if abs(BestSol[i]) <= epsilon[1]
-    #         nbZero = nbZero + 1
-    #         global nbZero
-    #     end
-    # end
+    # On compte le nombre de variable non nulles
+    best_bound = 0
+    for i in 1:n
 
+        if abs(x[i]) <= epsilon[1]
+
+            best_bound = best_bound + 1
+        
+        end
+    end
 
     # On verifie si la solution est entière
     entier = true
@@ -109,12 +108,12 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
         end
 
     end
-
+    maxViolation = 10
     Excoupe = true
     # global Excoupe
     start = time()
     # Tant que la solution n'est pas entière et que l'on trouve des coupes
-    while !entier && Excoupe && time()-start <= 100
+    while !entier && Excoupe && time() - start <= 3600 
         # On met à jour la taille de A
         m = size(A)[1]
         # global m
@@ -128,10 +127,11 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
         n_barre = size(b_barre)[1]
         k = 1
 
+
         # On fait une recherche pour les coupes suivantes.
         # On ne considère pas le cas k=1, car on a déjà traité les partitions de tailles 1
         while size(coupe)[1] == 0 && k != m_barre 
-                    
+
             for count_k in 1:k
         
                 # On initialise un vecteur qui va nous permettre de compter les itérations, ainsi que le décalage sur chaque itération
@@ -193,7 +193,7 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
                     if (uA_abs * x)[1] - ub_abs > epsilon[2]
         
                         coupe = vcat(coupe, transpose(u))
-                            
+
                     end    
         
                     # On passe à la partition suivantes
@@ -235,53 +235,60 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
 
         end    
 
+
         for j in 1:nb_coupe
-                
+                    
             # On calcule uA et ub correspondant
             for i in 1:n
                 uA[i] = sum(coupe[j, k] * A[k, i] for k in 1:m)
             end
             ub = sum(coupe[j, k] * b[k] for k in 1:m)
-        
+            
             # On calcule abs(uA) et abs(ub)
             ub_abs = floor(ub)
-        
+            
             for i in 1:n
-        
+            
                 uA_abs[i] = floor(uA[i])
-        
+            
             end
-        
+            
             # On met à jour A et b 
             A = vcat(A, uA_abs)
             # global A
             b = vcat(b, ub_abs)
             # global b
-            
+
         end
+
+
 
         # On calcule la nouvelle solution de la relaxation avec les coupes
         x = solveur(A, b)
-        # global x
-        entier = true
-        # global entier
 
-        # On regarde si la solution est meilleurs que la solution conservée
-        # nbZeroX = 0
-        # for i in 1:n
-        #     if abs(x[i]) <= epsilon[1]
-        #         nbZeroX = nbZeroX + 1
-        #     end
-        # end
+
+        # On verifie si la solution trouvée est meilleurs que la précedente
+        nb_zeros = 0
+        for i in 1:n
+
+            if abs(x[i]) <= epsilon[1]
+
+                nb_zeros = nb_zeros + 1
+
+            end
+        end
+
+        if nb_zeros > best_bound
+
+            best_bound = nb_zeros
         
-        # if nbZeroX > nbZero
-        #     bestSol = x
-        #     global bestSol
-        #     nbZero = nbZeroX
-        #     global nbZero
-        # end
+        end
+
+
 
         # On verifie si la solution est entière
+        entier = true
+
         for i in 1:n
 
             if abs(x[i] - floor(x[i])) >= epsilon[1] && abs(x[i] - ceil(x[i])) >= epsilon[1]
@@ -307,16 +314,26 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
     #     println("x[", i, "] = ", bestSol[i])   
 
     # end
-    isOptimal = false
+
     if entier
 
         println("L'algorithme s'est arreté car la solution est entière")
-        isOptimal = true
+
     elseif !Excoupe 
 
         println("L'algorithme s'est arreté car il n'a pas trouvé de coupe")
 
     end
+
+    nb_zeros = 0
+    for i in 1:n
+
+        if abs(x[i]) <= epsilon[1]
+
+            nb_zeros = nb_zeros + 1
+
+        end
+    end
     
-    return isOptimal, x, time()-start
+    return entier, x, time()-start, n - nb_zeros , n - best_bound
 end
