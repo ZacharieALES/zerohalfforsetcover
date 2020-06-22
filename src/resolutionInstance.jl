@@ -14,19 +14,9 @@ function solveDataSet()
     dataFolder = "../data/"
     resFolder = "../res/"
 
-    resolutionMethod = ["branchAndBoundCoupe", "branchAndBound", "coupeSuccessive"]
-    resolutionFolder = resFolder .* resolutionMethod
     if !isdir("../res")
         mkdir("../zerohalfforsetcover/res")
     end
-    for folder in resolutionFolder
-        if !isdir(folder)
-            mkdir(folder)
-        end
-    end
-
-    global isOptimal = false
-    global solveTime = -1
 
     # On parcourt les fichier
     for file in filter(x->occursin(".txt", x), readdir(dataFolder))
@@ -34,65 +24,81 @@ function solveDataSet()
         println("--Resolution of ", file)
         t = readInputFile(dataFolder * file)
 
-        # On utilise les différentes méthodes de résolution
-        for methodId in 1:size(resolutionMethod)[1]
+        global instanceResolue = InstanceResolue()
 
-            outputFile = resolutionFolder[methodId] * "/" * file
-            println(outputFile)
-            # If the input file has not already been solved by this methd
-            if !isfile(outputFile)
+        # On résoud l'instance considérée
+        instanceResolue = InstanceResolue(Instance(t))
+        
+        # On définie le fichier où est écrite la solution
+        outputFile = resFolder * file
 
-                fout = open(outputFile, "w")
+        # Si l'on a pas encore résolue l'instance
+        if !isfile(outputFile)
 
-                resolutionTime = -1
-                isOptimal = false
+            # On ouvre le fichier
+            fout = open(outputFile, "w")
 
-                # Si on applique le branchAndBoundCoupe
-                if resolutionMethod[methodId] == "branchAndBoundCoupe"
+            # On écrit la solution du branchAndBound
+            println(fout, "xBranchAndBound = [")
+            n = size(instanceResolue.xBranchAndBound)[1]
+            for i in 1:n
+            
+                if i != n
 
-                    # On résouds et on recupère la solution
-                    isOptimal, solution, resolutionTime = branchAndBoundCoupe(t)
+                    println(fout,"[", instanceResolue.xBranchAndBound[i], "];")
 
-                    # On note la solution
-                    if isOptimal
-                        writeSolution(fout, solution)
-                    end
-
-                # Si on applique la methode de coupeSuccessive
-                elseif resolutionMethod[methodId] == "coupeSuccessive"
-
-                    isSolved = false
-                    solution = []
-
-                    isOptimal, solution, resolutionTime = coupeSuccessive(t)
-
-                                    # On ecrit la solution
-                    if isOptimal
-                        writeSolution(fout, solution)
-                    end
-                
-                elseif resolutionMethod[methodId] == "branchAndBound"   
+                else
                     
-                    isSolved = false
-                    solution = []
-                    isOptimal, solution, resolutionTime = branchAndBound(t)
-                    
-                    # On note la solution
-                    if isOptimal
-                        writeSolution(fout, solution)
-                    end
+                    println(fout,"[", instanceResolue.xBranchAndBound[i],"]") 
+
                 end
-
-                println(fout, "solveTime = ", resolutionTime)
-                println(fout, "isOptimal = ", isOptimal)
-                close(fout)
             end
+            println(fout,"]")
+            println(fout, "solveTimeBranchAndBound = ", instanceResolue.tempsBranchAndBound)
+            println(fout, "isOptimalBranchAndBound = ", instanceResolue.isOptimalBranchAndBound)
+            println(fout, "DistanceBranchAndBound = ", instanceResolue.distanceBranchAndBound)
 
-        # Display the results obtained with the method on the current instance
-        # include(outputFile)
-        println(resolutionMethod[methodId], " optimal: ", isOptimal)
-        println(resolutionMethod[methodId], " time: " * string(round(solveTime, sigdigits=2)) * "s\n")
+            println(fout,"xBranchAndBoundCoupe = [")
+            for i in 1:n
+            
+                if i != n
+
+                    println(fout,"[", instanceResolue.xBranchAndBoundCoupe[i], "];")
+
+                else
+                    
+                    println(fout,"[", instanceResolue.xBranchAndBoundCoupe[i], "]") 
+
+                end
+            end
+            println(fout,"]")
+            println(fout, "solveTimeBranchAndBoundCoupe = ", instanceResolue.tempsBranchAndBoundCoupe)
+            println(fout, "isOptimalBranchAndBoundCoupe = ", instanceResolue.isOptimalBranchAndBoundCoupe)
+            println(fout, "DistanceBranchAndBoundCoupe = ", instanceResolue.distanceBranchAndBoundCoupe)
+
+            println(fout,"xCoupeSuccessive = [")
+            n = size(instanceResolue.xCoupeSuccessive)[1]
+            for i in 1:n
+            
+                if i != n
+
+                    println(fout,"[", instanceResolue.xCoupeSuccessive[i], "];")
+
+                else
+                    
+                    println(fout,"[", instanceResolue.xCoupeSuccessive[i], "]") 
+
+                end
+            end
+            println(fout,"]")
+
+            println(fout, "solveTimeCoupeSuccessive = ", instanceResolue.tempsCoupeSuccessive)
+
+            println(fout, "isEntierCoupeSuccessive = ", instanceResolue.entiereCoupeSuccessive)
+            println(fout, "DistanceCoupeSuccessive =  ", instanceResolue.distanceCoupeSuccessive)
+            close(fout)
 
         end
+
     end         
 end

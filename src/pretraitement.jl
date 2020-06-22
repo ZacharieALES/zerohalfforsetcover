@@ -480,6 +480,7 @@ function pretraitement(A::Array{Float64, 2}, b::Array{Float64, 1}, x::Array{Floa
 
 						# Cas ou la valeur de réference est la plus grande, on met alors à jour la ligne de reference et on supprime l'ancienne ligne
 						else
+							
 			    			slack = s[count_j]
 	  		    			A_barre = A_barre[setdiff(1:end, reference), :]
 			    			b_barre = b_barre[setdiff(1:end, reference)]

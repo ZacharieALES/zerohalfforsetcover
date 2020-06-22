@@ -81,19 +81,16 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
     u = zeros(Float64, m)
     best_bound = zeros(Float64, n)
     nb = 0
+    xEntier = zeros(Float64, n)
+    xTrier = Array{Float64}(undef, n)
+    indiceTrier = zeros(Int64, n)
+    doneCopier = Array{Bool}(undef, n)
+
     # On applique le solveur
     x = solveur(A, b)
 
     # On compte le nombre de variable non nulles
-    best_bound = 0
-    for i in 1:n
-
-        if abs(x[i]) <= epsilon[1]
-
-            best_bound = best_bound + 1
-        
-        end
-    end
+    best_bound = ceil(sum(x))
 
     # On verifie si la solution est entière
     entier = true
@@ -108,12 +105,69 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
         end
 
     end
-    maxViolation = 10
+
+    # On effectuer un triage de x en conservant les indices d'origines
+    for j in 1:n
+
+        doneCopier[j] = false
+
+    end
+    
+    count_j = 1
+
+    while count_j != n + 1
+
+        maxX = 0
+        indicemax = 0
+
+        for j in 1:n
+            
+            if !doneCopier[j] && (indicemax == 0 || x[j] > maxX)
+
+                maxX = x[j]
+                indicemax = j
+            
+            end
+        end
+
+        indiceTrier[count_j] = indicemax
+        xTrier = maxX
+        doneCopier[indicemax] = true
+        count_j = count_j + 1
+
+    end
+
+    # On met à jour xEntier jusqu'a avoir une solution 
+    solution = false
+    count_j = 1
+    while count_j != n + 1 && !solution
+
+        xEntier[indiceTrier[count_j]] = 1
+        solution = true
+
+        # On verifie si la xEntier est une solution
+        for j in 1:n
+
+            if (A * xEntier)[j] - b[j] > 0
+
+                solution = false
+
+            end
+        end
+        count_j = count_j + 1
+    end
+
+
+    
+    
+
+
     Excoupe = true
     # global Excoupe
     start = time()
     # Tant que la solution n'est pas entière et que l'on trouve des coupes
-    while !entier && Excoupe && time() - start <= 3600 
+    while !entier && Excoupe && time() - start <= 300 && sum(xEntier) > best_bound
+
         # On met à jour la taille de A
         m = size(A)[1]
         # global m
@@ -266,6 +320,63 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
         # On calcule la nouvelle solution de la relaxation avec les coupes
         x = solveur(A, b)
 
+        # On met à jour best_bound
+        best_bound = ceil(sum(x))
+
+        # On effectuer un triage de x en conservant les indices d'origines
+        for j in 1:n
+
+            doneCopier[j] = false
+
+        end
+        
+        count_j = 1
+
+        while count_j != n + 1
+
+            maxX = 0
+            indicemax = 0
+
+            for j in 1:n
+                
+                if !doneCopier[j] && (indicemax == 0 || x[j] > maxX)
+
+                    maxX = x[j]
+                    indicemax = j
+                
+                end
+            end
+
+            indiceTrier[count_j] = indicemax
+            xTrier = maxX
+            doneCopier[indicemax] = true
+            count_j = count_j + 1
+
+        end
+
+        # On met à jour xEntier jusqu'a avoir une solution 
+        solution = false
+        count_j = 1
+        while count_j != n + 1 && !solution
+
+            xEntier[indiceTrier[count_j]] = 1
+            solution = true
+
+            # On verifie si la xEntier est une solution
+            for j in 1:n
+
+                Ax = A * xEntier
+
+                if Ax[j] - b[j] > 0
+
+                    solution = false
+
+                end
+            end
+
+            count_j = count_j + 1
+
+        end
 
         # On verifie si la solution trouvée est meilleurs que la précedente
         nb_zeros = 0
@@ -278,11 +389,6 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
             end
         end
 
-        if nb_zeros > best_bound
-
-            best_bound = nb_zeros
-        
-        end
 
 
 
@@ -304,7 +410,7 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
     print("\nSolution obtenue \n")
     for i in 1:n
 
-        println("x[", i, "] = ", x[i])   
+        println("x[", i, "] = ", xEntier[i])   
 
     end
 
@@ -315,9 +421,12 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
 
     # end
 
-    if entier
+    isOptimal = false
 
-        println("L'algorithme s'est arreté car la solution est entière")
+    if entier || sum(xEntier) == best_bound
+
+        println("L'algorithme s'est arreté car la solution est optimale")
+        isOptimal = true
 
     elseif !Excoupe 
 
@@ -335,5 +444,5 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
         end
     end
     
-    return entier, x, time()-start, n - nb_zeros , n - best_bound
+    return isOptimal, xEntier, time()-start, sum(xEntier) , best_bound
 end

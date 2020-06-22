@@ -54,10 +54,10 @@ Generation de toutes les instances
 function generateDataSet()
 
     # Pour chaque nombre de ligne
-    for i in [ 10, 20, 30, 50, 80, 100]
+    for i in [ 10, 20, 30, 50, 80]
 
         # Pour chaque nombre de colonne
-        for j in [ 10, 20, 30, 50, 80, 100]
+        for j in [ 10, 20, 30, 50, 80]
 
             # Pour chaque densité considérée
             for density in [0.1, 0.25, 0.5, 0.75, 0.9]

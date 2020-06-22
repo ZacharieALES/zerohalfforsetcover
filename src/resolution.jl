@@ -23,6 +23,7 @@ function branchAndBoundCoupe(A_entree::Array{Float64, 2}, b_entree::Array{Float6
         b = b_entree
     end
     # global b
+    x_sol = Array{Float64}(undef, n)
     epsilon = epsilon_entree
     # global epsilon
     function testCallback(cb_data)
@@ -191,6 +192,9 @@ function branchAndBoundCoupe(A_entree::Array{Float64, 2}, b_entree::Array{Float6
 
     # Ajout du callback
     MOI.set(model, MOI.UserCutCallback(), testCallback)
+
+    # On met en place une durée maximale
+    set_parameter(model, "CPX_PARAM_TILIM", 3600)
     
     # Start a chronometer
     start = time()    
@@ -202,6 +206,7 @@ function branchAndBoundCoupe(A_entree::Array{Float64, 2}, b_entree::Array{Float6
     for i in 1:n
 
         println("x[", i, "] = ", JuMP.value(x[i]))   
+        x_sol[i] = JuMP.value(x[i])
 
     end
 
@@ -209,7 +214,7 @@ function branchAndBoundCoupe(A_entree::Array{Float64, 2}, b_entree::Array{Float6
     # 1 - true si un optimum est trouvé
     # 2 - la valeur associée à chaque sous-ensemble
     # 3 - le temps de resolution
-    return JuMP.primal_status(model) == JuMP.MathOptInterface.FEASIBLE_POINT, x, time() - start
+    return JuMP.primal_status(model) == JuMP.MathOptInterface.FEASIBLE_POINT, x_sol, time() - start,  JuMP.objective_value(model), JuMP.objective_bound(model)
 end
 
 """
@@ -228,11 +233,12 @@ function branchAndBound(A::Array{Float64, 2}, b_entree::Array{Float64, 1} = Arra
 
     m = size(A)[1]
     n = size(A)[2]
+    x_sol = Array{Float64}(undef, n)  
 
     if size(b_entree)[1] == 0
         b = -ones(Float64, m)
     else
-        b_entree = b
+        b = b_entree
     end
 
 
@@ -242,6 +248,9 @@ function branchAndBound(A::Array{Float64, 2}, b_entree::Array{Float64, 1} = Arra
     @constraint(model, [i in 1:m], sum(A[i, j] * x[j] for j in 1:n) <= b[i]) 
     @objective(model, Min, sum(x[i] for i in 1:n))
     
+    # On met en place une durée maximale 
+    set_parameter(model, "CPX_PARAM_TILIM", 3600)
+
     # Start a chronometer
     start = time()    
 
@@ -252,6 +261,7 @@ function branchAndBound(A::Array{Float64, 2}, b_entree::Array{Float64, 1} = Arra
     for i in 1:n
 
         println("x[", i, "] = ", JuMP.value(x[i]))   
+        x_sol[i] = JuMP.value(x[i])
 
     end
 
@@ -259,6 +269,6 @@ function branchAndBound(A::Array{Float64, 2}, b_entree::Array{Float64, 1} = Arra
     # 1 - true si un optimum est trouvé
     # 2 - la valeur associée à chaque sous-ensemble
     # 3 - le temps de resolution
-    return JuMP.primal_status(model) == JuMP.MathOptInterface.FEASIBLE_POINT, x, time() - start
+    return JuMP.primal_status(model) == JuMP.MathOptInterface.FEASIBLE_POINT, x_sol, time() - start, JuMP.objective_value(model), JuMP.objective_bound(model)
 
 end
