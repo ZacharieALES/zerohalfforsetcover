@@ -279,7 +279,7 @@ function resultsArray(outputFile::String = "../doc/resultatTableau.txt")
             elseif method == "CoupeSuccessive"
 
                 println(fout, " & ", round(solveTimeCoupeSuccessive, digits=2), " & ")
-                if isEntierCoupeSuccessive
+                if isOptimalCoupeSuccessive
 
                     println(fout, "\$\\times\$")
 
@@ -374,7 +374,7 @@ function performanceDiagram(outputFile::String = "../doc/performanceDiagram")
             end
         end
 
-        if isEntierCoupeSuccessive
+        if isOptimalCoupeSuccessive
 
             solveTime[3, countFile] = solveTimeCoupeSuccessive
 

@@ -56,7 +56,7 @@ mutable struct InstanceResolue
     tempsCoupeSuccessive::Float64
     isOptimalBranchAndBound::Bool
     isOptimalBranchAndBoundCoupe::Bool
-    entiereCoupeSuccessive::Bool
+    isOptimalCoupeSuccessive::Bool
     bestBoundCoupeSuccessive::Float64
     bestBoundBranchAndBound::Float64
     bestBoundBranchAndBoundCoupe::Float64
@@ -89,7 +89,7 @@ function InstanceResolue(n::Int64)
     this.objectifBranchAndBound = -1
     this.objectifBranchAndBoundCoupe = -1
     this.objectifCoupeSuccessive = -1
-    this.entiereCoupeSuccessive = false
+    this.isOptimalCoupeSuccessive = false
     this.distanceBranchAndBound = -1
     this.distanceBranchAndBoundCoupe = -1
     this.distanceCoupeSuccessive = -1
@@ -103,7 +103,7 @@ function InstanceResolue(instance::Instance)
     this = InstanceResolue()
     this.isOptimalBranchAndBound, this.xBranchAndBound, this.tempsBranchAndBound, this.objectifBranchAndBound, this.bestBoundBranchAndBound = branchAndBound(instance.A, instance.b)
     this.isOptimalBranchAndBoundCoupe, this.xBranchAndBoundCoupe, this.tempsBranchAndBoundCoupe, this.objectifBranchAndBoundCoupe, this.bestBoundBranchAndBoundCoupe = branchAndBoundCoupe(instance.A, instance.b)
-    this.entiereCoupeSuccessive, this.xCoupeSuccessive, this.tempsCoupeSuccessive, this.objectifCoupeSuccessive, this.bestBoundCoupeSuccessive = coupeSuccessive(instance.A, instance.b)
+    this.isOptimalCoupeSuccessive, this.xCoupeSuccessive, this.tempsCoupeSuccessive, this.objectifCoupeSuccessive, this.bestBoundCoupeSuccessive = coupeSuccessive(instance.A, instance.b)
     this.distanceBranchAndBound  = abs(this.bestBoundBranchAndBound - this.objectifBranchAndBound) / this.objectifBranchAndBound
     this.distanceBranchAndBoundCoupe = abs(this.bestBoundBranchAndBoundCoupe - this.objectifBranchAndBoundCoupe) / this.objectifBranchAndBoundCoupe
     this.distanceCoupeSuccessive = abs(this.bestBoundCoupeSuccessive - this.objectifCoupeSuccessive) / this.objectifCoupeSuccessive

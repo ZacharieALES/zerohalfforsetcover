@@ -56,8 +56,8 @@ function generateDataSet()
     # Pour chaque nombre de ligne
     for i in [ 10, 20, 30, 50, 80]
 
-        # Pour chaque nombre de colonne
-        for j in [ 10, 20, 30, 50, 80]
+        # # Pour chaque nombre de colonne
+        # for j in [ 10, 20, 30, 50, 80]
 
             # Pour chaque densité considérée
             for density in [0.1, 0.25, 0.5, 0.75, 0.9]
@@ -65,12 +65,12 @@ function generateDataSet()
                 # Genere 5 instances
                 for instance in 1:10
 
-                    fileName = "../data/instance_t" * "_i" * string(i) * "_j" * string(j) * "_" * string(density) * "_" * string(instance) * ".txt"
+                    fileName = "../data/instance_t" * "_i" * string(i) * "_j" * string(i) * "_" * string(density) * "_" * string(instance) * ".txt"
                     println("--Generating file" * fileName)
-                    saveInstance(generateInstance(i, j, density).A, fileName) 
+                    saveInstance(generateInstance(i, i, density).A, fileName) 
 
                 end
             end
-        end
+        # end
     end
 end

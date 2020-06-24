@@ -24,17 +24,17 @@ function solveDataSet()
         println("--Resolution of ", file)
         t = readInputFile(dataFolder * file)
 
-        global instanceResolue = InstanceResolue()
-
-        # On résoud l'instance considérée
-        instanceResolue = InstanceResolue(Instance(t))
-        
         # On définie le fichier où est écrite la solution
         outputFile = resFolder * file
 
         # Si l'on a pas encore résolue l'instance
         if !isfile(outputFile)
 
+            global instanceResolue = InstanceResolue()
+
+            # On résoud l'instance considérée
+            instanceResolue = InstanceResolue(Instance(t))
+    
             # On ouvre le fichier
             fout = open(outputFile, "w")
 
@@ -94,7 +94,7 @@ function solveDataSet()
 
             println(fout, "solveTimeCoupeSuccessive = ", instanceResolue.tempsCoupeSuccessive)
 
-            println(fout, "isEntierCoupeSuccessive = ", instanceResolue.entiereCoupeSuccessive)
+            println(fout, "isOptimalCoupeSuccessive = ", instanceResolue.isOptimalCoupeSuccessive)
             println(fout, "DistanceCoupeSuccessive =  ", instanceResolue.distanceCoupeSuccessive)
             close(fout)
 

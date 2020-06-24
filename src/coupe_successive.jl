@@ -166,7 +166,7 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
     # global Excoupe
     start = time()
     # Tant que la solution n'est pas entière et que l'on trouve des coupes
-    while !entier && Excoupe && time() - start <= 300 && sum(xEntier) > best_bound
+    while !entier && Excoupe && time() - start <= 1000 && sum(xEntier) > best_bound
 
         # On met à jour la taille de A
         m = size(A)[1]

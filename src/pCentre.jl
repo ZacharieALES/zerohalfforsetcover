@@ -1,4 +1,4 @@
-include("resolution.jl")
+include("resolutionInstance.jl")
 
 """
 On met en place une résolution dichotomique du problème des p-centres
@@ -70,8 +70,7 @@ function pCentre(matriceDistance::Array{Float64, 2}, p::Int64, methode::String =
             solvable[i] = sum(matriceDichotomie[i, j] for j in 1:n)
 
         end
-        println(solvable)
-        println(matriceDichotomie)
+
         for j in 1:m
 
             if solvable[j] == 0
