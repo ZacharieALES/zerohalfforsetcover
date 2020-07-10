@@ -15,8 +15,6 @@ Argument:
 
 function readInputFile(inputFile::String)
 
-
-
     # Ouvre le fichier
     datafile = open(inputFile)
 
@@ -59,6 +57,56 @@ end
 
 
 """
+Fais la lecture d'une instance de PCentre à partir d'un fichier
+
+Argument:
+- inputFile: path of the input inputFile
+"""
+
+function readInputFilePCentre(inputFile::String)
+
+    # Ouvre le fichier
+    datafile = open(inputFile)
+
+    data = readlines(datafile)
+    close(datafile)
+
+    n = length(split(data[2], ","))
+    p = parse(Int64, split(data[1], ",")[1])
+    m = 0
+    for line in data
+        
+        lineSplit = split(line, ",")
+
+        if size(lineSplit, 1) == n
+            m = m + 1
+        end
+    end
+
+    t = Array{Float64}(undef, m, n)
+
+    lineNb = 0
+
+    # For each line of the input inputFile
+    for line in data
+
+        lineSplit = split(line, ",")
+
+        if size(lineSplit, 1) == n && lineNb != 0
+            for colNb in 1:n
+                t[lineNb, colNb] = Float64(parse(Int64, lineSplit[colNb]))
+            end
+        end
+
+        lineNb = lineNb + 1
+
+    end 
+
+    return t, p
+
+end
+
+"""
 Sauvegarde une grille dans un fichier .txt
 
 Argument
@@ -82,6 +130,42 @@ function saveInstance(t::Array{Float64, 2}, outputFile::String)
             print(writer, " ")
             print(writer, Int64(t[i, j]))
 
+            if j != n
+                print(writer, ",")
+            else
+                print(writer, "\n")
+            end
+        end
+    end
+
+    close(writer)
+end
+
+"""
+Sauvegarde d'une instance dans un fichier .txt
+
+Argument :
+- A: Matrice de flottant de taille m*n
+- p 
+- outputFile: chemin d'acce du fichier de sorti
+"""
+
+function savePCentreInstance(t::Array{Float64, 2}, p::Int64, outputFile::String)
+
+    m = size(t)[1]
+    n = size(t)[2]
+
+    # Ouvre le fichier de sortie
+    writer = open(outputFile, "w")
+    print(writer, p, ",\n")
+    # On parcours la matrice
+    for i in 1:m
+
+
+        for j in 1:n
+            # On ecrit la valeur de chaque case
+            print(writer, Int64(t[i, j]))
+    
             if j != n
                 print(writer, ",")
             else

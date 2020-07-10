@@ -50,6 +50,7 @@ end
 mutable struct InstanceResolue
     xBranchAndBound::Array{Float64}
     xBranchAndBoundCoupe::Array{Float64}
+    xEntierCoupeSuccessive::Array{Float64}
     xCoupeSuccessive::Array{Float64}
     tempsBranchAndBound::Float64
     tempsBranchAndBoundCoupe::Float64
@@ -77,6 +78,7 @@ function InstanceResolue(n::Int64)
     this = InstanceResolue()
     this.xBranchAndBound = Array{Float64}(undef, n)
     this.xBranchAndBoundCoupe = Array{Float64}(undef, n)
+    this.xEntierCoupeSuccessive = Array{Float64}(undef, n)
     this.xCoupeSuccessive = Array{Float64}(undef, n)
     this.tempsBranchAndBound = -1
     this.tempsBranchAndBoundCoupe = -1
@@ -102,11 +104,74 @@ function InstanceResolue(instance::Instance)
 
     this = InstanceResolue()
     this.isOptimalBranchAndBound, this.xBranchAndBound, this.tempsBranchAndBound, this.objectifBranchAndBound, this.bestBoundBranchAndBound = branchAndBound(instance.A, instance.b)
-    this.isOptimalBranchAndBoundCoupe, this.xBranchAndBoundCoupe, this.tempsBranchAndBoundCoupe, this.objectifBranchAndBoundCoupe, this.bestBoundBranchAndBoundCoupe = branchAndBoundCoupe(instance.A, instance.b)
-    this.isOptimalCoupeSuccessive, this.xCoupeSuccessive, this.tempsCoupeSuccessive, this.objectifCoupeSuccessive, this.bestBoundCoupeSuccessive = coupeSuccessive(instance.A, instance.b)
+    this.isOptimalBranchAndBoundCoupe, this.xBranchAndBoundCoupe, this.tempsBranchAndBoundCoupe, this.objectifBranchAndBoundCoupe, this.bestBoundBranchAndBoundCoupe, A_inegalite, b_inegalite = branchAndBoundCoupe(instance.A, instance.b)
+    this.isOptimalCoupeSuccessive, this.xEntierCoupeSuccessive, this.tempsCoupeSuccessive, this.objectifCoupeSuccessive, this.bestBoundCoupeSuccessive, this.xCoupeSuccessive, A_inegalite, b_inegalite = coupeSuccessive(instance.A, instance.b)
     this.distanceBranchAndBound  = abs(this.bestBoundBranchAndBound - this.objectifBranchAndBound) / this.objectifBranchAndBound
     this.distanceBranchAndBoundCoupe = abs(this.bestBoundBranchAndBoundCoupe - this.objectifBranchAndBoundCoupe) / this.objectifBranchAndBoundCoupe
     this.distanceCoupeSuccessive = abs(this.bestBoundCoupeSuccessive - this.objectifCoupeSuccessive) / this.objectifCoupeSuccessive
     return(this)
     
+end
+
+mutable struct PCentre
+    A::Array{Float64}
+    p::Int64
+    function PCentre()
+        return new()
+    end
+end
+
+function PCentre(A::Array{Float64}, p::Int64)
+
+    this = PCentre()
+    this.A = A
+    this.p = p
+    return(this)
+    
+end
+
+mutable struct PCentreResolu
+    distanceBranchAndBound::Float64
+    xBranchAndBound::Array{Float64}
+    resolutionTimeBranchAndBound::Float64
+    distanceBranchAndBoundRelaxation::Float64
+    xBranchAndBoundRelaxation::Array{Float64}
+    resolutionTimeBranchAndBoundRelaxation::Float64
+    distanceBranchAndBoundCoupe::Float64
+    xBranchAndBoundCoupe::Array{Float64}
+    resolutionTimeBranchAndBoundCoupe::Float64
+    distanceBranchAndBoundCoupeRelaxation::Float64
+    xBranchAndBoundCoupeRelaxation::Array{Float64}
+    resolutionTimeBranchAndBoundCoupeRelaxation::Float64
+    distanceCoupeSuccessive::Float64
+    xCoupeSuccessive::Array{Float64}
+    resolutionTimeCoupeSuccessive::Float64
+    distanceCoupeSuccessiveRelaxation
+    xCoupeSuccessiveRelaxation::Array{Float64}
+    resolutionTimeCoupeSuccessiveRelaxation::Float64
+    distanceRelaxationClassique
+    xRelaxationClassique
+    resolutionTimeRelaxationClassique
+    distanceRelaxationCoupe
+    xRelaxationCoupe
+    resolutionTimeRelaxationCoupe
+    function PCentreResolu()
+        return new()
+    end
+end
+
+function PCentreResolu(matriceDistance::Array{Float64}, p::Int64)
+
+    this = PCentreResolu()
+
+    this.distanceBranchAndBound, this.xBranchAndBound, this.resolutionTimeBranchAndBound = pCentreEntier(matriceDistance, p, "branchAndBound", false)
+    this.distanceBranchAndBoundRelaxation, this.xBranchAndBoundRelaxation, this.resolutionTimeBranchAndBoundRelaxation = pCentreEntier(matriceDistance, p, "branchAndBound", true)
+    this.distanceBranchAndBoundCoupe, this.xBranchAndBoundCoupe, this.resolutionTimeBranchAndBoundCoupe = pCentreEntier(matriceDistance, p, "branchAndBoundCoupe", false)
+    this.distanceBranchAndBoundCoupeRelaxation, this.xBranchAndBoundCoupeRelaxation, this.resolutionTimeBranchAndBoundCoupeRelaxation = pCentreEntier(matriceDistance, p, "branchAndBoundCoupe", true)
+    this.distanceCoupeSuccessive, this.xCoupeSuccessive, this.resolutionTimeCoupeSuccessive = pCentreEntier(matriceDistance, p, "coupeSuccessive", false)   
+    this.distanceCoupeSuccessiveRelaxation, this.xCoupeSuccessiveRelaxation, this.resolutionTimeCoupeSuccessiveRelaxation = pCentreEntier(matriceDistance, p, "coupeSuccessive", true)  
+    this.distanceRelaxationClassique, this.xRelaxationClassique, this.resolutionTimeRelaxationClassique = pCentreRelaxation(matriceDistance, p, "classique")
+    this.distanceRelaxationCoupe, this.xRelaxationCoupe, this.resolutionTimeRelaxationCoupe = pCentreRelaxation(matriceDistance, p, "planCoupantFini")
+    return this
+
 end

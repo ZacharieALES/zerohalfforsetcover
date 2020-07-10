@@ -74,3 +74,109 @@ function generateDataSet()
         # end
     end
 end
+
+"""
+Generation d'une instance de P-centre
+
+Argument : 
+- m : le nombre de maison
+- n : le nombre d'entrepot
+- p : entier correspondant au p-centre (si mis à -1 choisi aléatoirement)
+- Max : la coordonnée ou distance max
+- methode : la methode de génération
+
+Sortie :
+- A : matrice des distances
+- p 
+"""
+
+function generationPCentre(m::Int64, n::Int64, p::Int64 = -1, Max::Int64 = 10, methode::String = "carthesien")
+
+    distance = Array{Float64}(undef, m, n)
+    
+
+    # Si p est négatif, on le choisit aléatoirement
+    if p < 0
+
+        p = ceil(n * rand())
+
+    end
+
+    # On genere selon la méthode
+    if methode == "carthesien"
+
+        # On initialise les matrices de coordonnées
+        entrepot = Array{Float64}(undef, n, 2)
+        maison = Array{Float64}(undef, m, 2)
+        for i in 1:m
+
+            maison[i, 1] = ceil(Max * rand())
+            maison[i, 2] = ceil(Max * rand())
+        
+        end
+
+        for j in 1:n
+
+            entrepot[j, 1] = ceil(Max * rand())
+            entrepot[j, 2] = ceil(Max * rand())
+
+        end
+
+        # On calcule les distances correspondantes
+        for i in 1:m
+
+            for j in 1:n
+
+                distance[i, j] = (entrepot[j, 1] - maison[i, 1]) ^ 2 + (entrepot[j, 2] - maison[i, 2]) ^ 2
+            
+            end
+        end
+
+    elseif methode == "aleatoire"
+
+        for i in 1:m
+
+            for j in 1:n
+
+                distance[i, j] = ceil(Max * rand())
+
+            end
+        end
+    end
+
+    pCentre = PCentre(distance, p)
+    return(pCentre)
+end
+                    
+"""
+Generation des instances de pCentre
+"""
+
+function generatePCentreDataSet()
+
+    # Pour chaque nombre d'entrepot
+    for m in [ 10, 20, 30]
+
+        #  Pour chaque nombre de maison
+        for n in [ 10, 20, 30]
+
+            # Pour chaque densité considérée
+            for methode in ["aleatoire", "carthesien"]
+
+                for p in [2, 4, 6]
+
+                    # Genere 10 instances
+                    for instance in 1:10
+
+                        fileName = "../dataPCentre/instance_t" * "_m" * string(m) * "_n" * string(n) * "_p" * string(p) * "_" * methode * "_" * string(instance) * ".txt"
+                        println("--Generating file" * fileName)
+                        pCentreInstance = generationPCentre(m, n, p, 20, methode)
+                        savePCentreInstance(pCentreInstance.A, pCentreInstance.p, fileName)
+
+                    end
+                end
+            end
+        # end
+    end
+end
+end

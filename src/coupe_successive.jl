@@ -39,6 +39,8 @@ function solveur(A::Array{Float64, 2}, b::Array{Float64, 1}, isRelaxation::Bool 
     @constraint(model, [i in 1:m], sum(A[i, j] * x[j] for j in 1:n) <= b[i]) 
     @objective(model, Min, sum(x[i] for i in 1:n))
 
+    start = time()
+
     optimize!(model)
 
     for i in 1:n 
@@ -47,10 +49,10 @@ function solveur(A::Array{Float64, 2}, b::Array{Float64, 1}, isRelaxation::Bool 
 
     end
 
-    return x_sol
+    return JuMP.primal_status(model) == JuMP.MathOptInterface.FEASIBLE_POINT, x_sol, time() - start, JuMP.objective_value(model), JuMP.objective_bound(model)
 end    
 
-function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1} = Array{Float64}(undef, 0), epsilon_entree::Array{Float64, 1} = [0.0001; 0.001])
+function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1} = Array{Float64}(undef, 0), epsilon_entree::Array{Float64, 1} = [0.0001; 0.001], nb_iteration::Int64 = -1, methode = "classique")
 
     start = time()
     # Definition des données du problème
@@ -87,7 +89,7 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
     doneCopier = Array{Bool}(undef, n)
 
     # On applique le solveur
-    x = solveur(A, b)
+    NU1, x, NU2, NU3, NU4 = solveur(A, b)
 
     # On compte le nombre de variable non nulles
     best_bound = ceil(sum(x))
@@ -146,7 +148,7 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
         solution = true
 
         # On verifie si la xEntier est une solution
-        for j in 1:n
+        for j in 1:size(b)[1]
 
             if (A * xEntier)[j] - b[j] > 0
 
@@ -157,16 +159,12 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
         count_j = count_j + 1
     end
 
-
-    
-    
-
-
     Excoupe = true
     # global Excoupe
     start = time()
+    compteur = 0
     # Tant que la solution n'est pas entière et que l'on trouve des coupes
-    while !entier && Excoupe && time() - start <= 1000 && sum(xEntier) > best_bound
+    while (!entier && Excoupe && time() - start <= 1000 && sum(xEntier) > best_bound && nb_iteration < 0) || (!entier && Excoupe && time() - start <= 1000 && sum(xEntier) > best_bound && nb_iteration > 0 && compteur < nb_iteration)
 
         # On met à jour la taille de A
         m = size(A)[1]
@@ -318,7 +316,7 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
 
 
         # On calcule la nouvelle solution de la relaxation avec les coupes
-        x = solveur(A, b)
+        NU1, x, NU2, NU3, NU4 = solveur(A, b)
 
         # On met à jour best_bound
         best_bound = ceil(sum(x))
@@ -363,7 +361,7 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
             solution = true
 
             # On verifie si la xEntier est une solution
-            for j in 1:n
+            for j in 1:size(b)[1]
 
                 Ax = A * xEntier
 
@@ -404,6 +402,9 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
 
             end
         end
+
+        compteur = compteur + 1
+
     end
 
     # Affichage de la solution
@@ -423,15 +424,20 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
 
     isOptimal = false
 
-    if entier || sum(xEntier) == best_bound
+    if entier 
 
-        println("L'algorithme s'est arreté car la solution est optimale")
-        isOptimal = true
+        println("L'algorithme s'est arreté car la solution est entiere")
 
     elseif !Excoupe 
 
         println("L'algorithme s'est arreté car il n'a pas trouvé de coupe")
 
+    end
+
+    if sum(xEntier) == best_bound
+
+        isOptimal = true
+        println("L'algorithme a trouvé une solution optimale")
     end
 
     nb_zeros = 0
@@ -444,5 +450,5 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
         end
     end
     
-    return isOptimal, xEntier, time()-start, sum(xEntier) , best_bound
+    return isOptimal, xEntier, time()-start, sum(xEntier) , best_bound, x, A, b
 end
