@@ -318,6 +318,7 @@ function branchAndBoundCoupe(A_entree::Array{Float64, 2}, b_entree::Array{Float6
                                     coupeRetenue = vcat(coupeRetenue, transpose(coupe[j,:]))
                                     nbCoupeRetenue = nbCoupeRetenue + 1
                                     ajoutCoupe = true
+                                    traitee[j] == true
 
                                 end
                             end
@@ -341,15 +342,15 @@ function branchAndBoundCoupe(A_entree::Array{Float64, 2}, b_entree::Array{Float6
                         uA_abs[i] = floor(uA[i])
                 
                     end
-                    # On ajoute uniquement les coupe de violations suffisante
-                    if sum(uA_abs[k] * x_sol[k] for k in 1:n) - ub_abs >= 0.3
+                    # # On ajoute uniquement les coupe de violations suffisante
+                    # if sum(uA_abs[k] * x_sol[k] for k in 1:n) - ub_abs >= 0.3
 
                         # Definition de la nouvelle contrainte
                         con = @build_constraint(sum(uA_abs[i] * x[i] for i in 1:n) <= ub_abs)
                     
                         # On l'ajoute au problème
                         MOI.submit(model, MOI.UserCut(cb_data), con)
-                    end
+                    # end
                     
                     if sum(uA_abs[k] * x_optimal[k] for k in 1:n) - ub_abs > 0
 
