@@ -17,6 +17,7 @@ Sortie
 
 function solveur(A::Array{Float64, 2}, b::Array{Float64, 1}, isRelaxation::Bool = true)
 
+
     m = size(A)[1]
     n = size(A)[2]
     x_sol = Array{Float64}(undef, n)
@@ -47,8 +48,9 @@ function solveur(A::Array{Float64, 2}, b::Array{Float64, 1}, isRelaxation::Bool 
 
         x_sol[i] = JuMP.value(x[i])
 
+
     end
-    println(x_sol)
+
     return JuMP.primal_status(model) == JuMP.MathOptInterface.FEASIBLE_POINT, x_sol, time() - start, JuMP.objective_value(model), JuMP.objective_bound(model)
 end    
 
@@ -422,7 +424,7 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
                 end
 
                 traitee[k] = true
-                coupeRetenue[k] = coupe[indiceMax]
+                coupeRetenue[k, :] = coupe[indiceMax, :]
 
             end
             for k in 1:nbCoupeRetenue
@@ -460,6 +462,7 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
                 # global A
                 b = vcat(b, ub_abs)
                 # global b
+                # println(sum(uA_abs[j] * x[j]) - ub_abs)
 
             end
         end
@@ -467,7 +470,6 @@ function coupeSuccessive(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1
 
         # On calcule la nouvelle solution de la relaxation avec les coupes
         NU1, x, NU2, NU3, NU4 = solveur(A, b)
-        println(x)
         # On met à jour best_bound
         best_bound = ceil(sum(x))
 

@@ -11,6 +11,12 @@ cb_data : correspond à une solution fractionnaire trouvée par CPLEX
 
 function branchAndBoundCoupe(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1} = Array{Float64}(undef, 0), epsilon_entree::Array{Float64, 1} = [0.0001; 0.0001], methode::String = "zerohalfcut")
     
+    x_optimal = zeros(50)
+    x_optimal[3] = 1
+    x_optimal[4] = 1
+    x_optimal[25] = 1
+    x_optimal[31] = 1
+    x_optimal[36] = 1
     timer = time()
     A = A_entree
     # global A
@@ -195,6 +201,7 @@ function branchAndBoundCoupe(A_entree::Array{Float64, 2}, b_entree::Array{Float6
             
             if methode == "zerohalfcut" || methode == "zerohalfcutreduit" 
 
+                
                 # Pour chaque coupe, on ajoute l'inégalité correspondante. On les ajoute également à A et b
                 nb_coupe = size(coupe)[1]
                 
@@ -204,6 +211,13 @@ function branchAndBoundCoupe(A_entree::Array{Float64, 2}, b_entree::Array{Float6
                 # Le nombre de coupe retenue
                 nbCoupeRetenue = 1
                 coupeRetenue = Array{Float64}(undef, nbCoupeRetenue, m)
+                xSollicite = Array{Bool}(undef, n)
+
+                for j in 1:n
+
+                    xSollicite[j] = false
+                    
+                end
 
                 for j in 1:nb_coupe
                 
@@ -239,12 +253,12 @@ function branchAndBoundCoupe(A_entree::Array{Float64, 2}, b_entree::Array{Float6
                 for j in 1:nbCoupeRetenue
 
                     # On cherche le maximum
-                    max = -1
+                    max = 0
                     indiceMax = 0
 
                     for k in 1:nb_coupe
 
-                        if violation[k] > max && traitee[k] == false
+                        if violation[k] >= max && traitee[k] == false
 
                             max = violation[k]
                             indiceMax = k
@@ -253,9 +267,62 @@ function branchAndBoundCoupe(A_entree::Array{Float64, 2}, b_entree::Array{Float6
                     end
 
                     # On récupère la coupe retenue
-                    coupeRetenue[j] = coupe[indiceMax]
-                    traitee[k] = true
 
+
+                    coupeRetenue[j, :] = coupe[indiceMax, :]
+                    traitee[indiceMax] = true
+
+                end
+                # On récupère l'indice des x sollicités
+                for j in 1:nbCoupeRetenue
+
+                    for i in 1:n
+                        uA[i] = sum(coupeRetenue[j, k] * A[k, i] for k in 1:m)
+                        uA_abs[i] = floor(uA[i])
+                    end
+                
+
+                    for i in 1:n
+
+                        if uA_abs[i] != 0
+
+                            xSollicite[i] = false
+
+                        end
+                    end
+                end
+
+                # On ajoute les coupes qui font apparaitre les x non sollicités
+                for i in 1:n
+
+                    # Si le x n'est pas sollicité, on cherche une coupe qui le fait apparaitre
+                    if xSollicite[i] == false
+
+                        ajoutCoupe = false
+
+                        for j in 1:nb_coupe
+
+                            # Si la coupe n'a pas encore été mise en place
+                            if traitee[j] == false && ajoutCoupe == false
+
+                                # On regarde si la coupe met en place x[i]
+                                for h in 1:n
+
+                                    uA[h] = sum(coupe[j, k] * A[k, h] for k in 1:m)
+                                    uA_abs[h] = floor(uA[h])
+
+                                end
+                            
+                                if uA_abs[i] != 0
+
+                                    coupeRetenue = vcat(coupeRetenue, transpose(coupe[j,:]))
+                                    nbCoupeRetenue = nbCoupeRetenue + 1
+                                    ajoutCoupe = true
+
+                                end
+                            end
+                        end
+                    end
                 end
 
                 for j in 1:nbCoupeRetenue
@@ -283,8 +350,16 @@ function branchAndBoundCoupe(A_entree::Array{Float64, 2}, b_entree::Array{Float6
                         # On l'ajoute au problème
                         MOI.submit(model, MOI.UserCut(cb_data), con)
                     end
-                
-                    # println(sum(uA_abs[k] * x_sol[k] for k in 1:n) - ub_abs)
+                    
+                    if sum(uA_abs[k] * x_optimal[k] for k in 1:n) - ub_abs > 0
+
+                        println("La coupe enleve la solution")
+
+                    elseif sum(uA_abs[k] * x_optimal[k] for k in 1:n) - ub_abs == 0
+
+                        println("La coupe est sur la solution")
+
+                    end
 
                     # On met à jour A et b 
                     A = vcat(A, uA_abs)
