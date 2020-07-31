@@ -54,7 +54,7 @@ Generation de toutes les instances
 function generateDataSet()
 
     # Pour chaque nombre de ligne
-    for i in [ 10, 20, 30, 50, 80]
+    for i in [5, 10, 20, 30, 40]
 
         # # Pour chaque nombre de colonne
         # for j in [ 10, 20, 30, 50, 80]
@@ -90,7 +90,7 @@ Sortie :
 - p 
 """
 
-function generationPCentre(m::Int64, n::Int64, p::Int64 = -1, Max::Int64 = 10, methode::String = "carthesien")
+function generationPCentre(m::Int64, n::Int64, p::Int64 = -1, Max::Int64 = 20, methode::String = "carthesien")
 
     distance = Array{Float64}(undef, m, n)
     

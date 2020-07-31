@@ -9,8 +9,9 @@ Definition du callback
 cb_data : correspond à une solution fractionnaire trouvée par CPLEX
 """
 
-function branchAndBoundCoupe(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1} = Array{Float64}(undef, 0), epsilon_entree::Array{Float64, 1} = [0.0001; 0.0001], methode::String = "PNLE")
-
+function branchAndBoundCoupe(A_entree::Array{Float64, 2}, b_entree::Array{Float64, 1} = Array{Float64}(undef, 0), epsilon_entree::Array{Float64, 1} = [0.0001; 0.0001], methode::String = "zerohalfcut")
+    
+    timer = time()
     A = A_entree
     # global A
     m = size(A)[1]
@@ -27,8 +28,7 @@ function branchAndBoundCoupe(A_entree::Array{Float64, 2}, b_entree::Array{Float6
     # global epsilon
     function testCallback(cb_data)
 
-        println("callback")
-        if methode == "zerohalfcut" || methode == "zerohalfcutreduit"
+        if methode == "zerohalfcut" || methode == "zerohalfcutreduit" && time() - timer <= 60
 
             m = size(A)[1]
             n = size(A)[2]
@@ -55,10 +55,11 @@ function branchAndBoundCoupe(A_entree::Array{Float64, 2}, b_entree::Array{Float6
             m_barre = size(A_barre)[1]
             n_barre = size(b_barre)[1]
             k = 1
+
             # On fait une recherche pour les coupes suivantes.
             # On ne considère pas le cas k=1, car on a déjà traité les partitions de tailles 1
-            while size(coupe)[1] == 0 && k != m_barre && methode == "zerohalfcut"
-                    
+            while size(coupe)[1] == 0 && k != 1 && methode == "zerohalfcut" 
+                
                 for count_k in 1:k
         
                     # On initialise un vecteur qui va nous permettre de compter les itérations, ainsi que le décalage sur chaque itération
@@ -191,43 +192,110 @@ function branchAndBoundCoupe(A_entree::Array{Float64, 2}, b_entree::Array{Float6
                 end
 
             end
-                
-            # Pour chaque coupe, on ajoute l'inégalité correspondante. On les ajoute également à A et b
-            nb_coupe = size(coupe)[1]
             
-            for j in 1:nb_coupe
-            
-                # On calcule uA et ub correspondant
-                for i in 1:n
-                    uA[i] = sum(coupe[j, k] * A[k, i] for k in 1:m)
-                end
-                ub = sum(coupe[j, k] * b[k] for k in 1:m)
-            
-                # On calcule abs(uA) et abs(ub)
-                ub_abs = floor(ub)
-            
-                for i in 1:n
-            
-                    uA_abs[i] = floor(uA[i])
-            
-                end
-            
-                # Definition de la nouvelle contrainte
-                con = @build_constraint(sum(uA_abs[i] * x[i] for i in 1:n) <= ub_abs)
-            
-                # On l'ajoute au problème
-                MOI.submit(model, MOI.UserCut(cb_data), con)
-            
-                # On met à jour A et b 
-                A = vcat(A, uA_abs)
-                b = vcat(b, ub_abs)
-                # global A
-                # global b
-                
-            end
+            if methode == "zerohalfcut" || methode == "zerohalfcutreduit" 
 
+                # Pour chaque coupe, on ajoute l'inégalité correspondante. On les ajoute également à A et b
+                nb_coupe = size(coupe)[1]
+                
+                # On initialise la matrice qui stocke l'ensemble des violations
+                violation = Array{Float64}(undef, nb_coupe)
+
+                # Le nombre de coupe retenue
+                nbCoupeRetenue = 1
+                coupeRetenue = Array{Float64}(undef, nbCoupeRetenue, m)
+
+                for j in 1:nb_coupe
+                
+                    # On calcule uA et ub correspondant
+                    for i in 1:n
+                        uA[i] = sum(coupe[j, k] * A[k, i] for k in 1:m)
+                    end
+                    ub = sum(coupe[j, k] * b[k] for k in 1:m)
+                
+                    # On calcule abs(uA) et abs(ub)
+                    ub_abs = floor(ub)
+                
+                    for i in 1:n
+                
+                        uA_abs[i] = floor(uA[i])
+                
+                    end
+
+                    # On ajoute la violation correspondante
+                    violation[j] = sum(uA_abs[k] * x_sol[k] for k in 1:n) - ub_abs
+                
+                end
+
+                traitee = Array{Bool}(undef, nb_coupe)
+                
+                for i in 1:nb_coupe
+
+                    traitee[i] = false
+
+                end
+
+                # On ne récupère que le nombre correspondant de coupe, en prenant les plus violées
+                for j in 1:nbCoupeRetenue
+
+                    # On cherche le maximum
+                    max = -1
+                    indiceMax = 0
+
+                    for k in 1:nb_coupe
+
+                        if violation[k] > max && traitee[k] == false
+
+                            max = violation[k]
+                            indiceMax = k
+
+                        end
+                    end
+
+                    # On récupère la coupe retenue
+                    coupeRetenue[j] = coupe[indiceMax]
+                    traitee[k] = true
+
+                end
+
+                for j in 1:nbCoupeRetenue
+
+                    # On calcule uA et ub correspondant
+                    for i in 1:n
+                        uA[i] = sum(coupeRetenue[j, k] * A[k, i] for k in 1:m)
+                    end
+                    ub = sum(coupeRetenue[j, k] * b[k] for k in 1:m)
+                
+                    # On calcule abs(uA) et abs(ub)
+                    ub_abs = floor(ub)
+                
+                    for i in 1:n
+                
+                        uA_abs[i] = floor(uA[i])
+                
+                    end
+                    # On ajoute uniquement les coupe de violations suffisante
+                    if sum(uA_abs[k] * x_sol[k] for k in 1:n) - ub_abs >= 0.3
+
+                        # Definition de la nouvelle contrainte
+                        con = @build_constraint(sum(uA_abs[i] * x[i] for i in 1:n) <= ub_abs)
+                    
+                        # On l'ajoute au problème
+                        MOI.submit(model, MOI.UserCut(cb_data), con)
+                    end
+                
+                    # println(sum(uA_abs[k] * x_sol[k] for k in 1:n) - ub_abs)
+
+                    # On met à jour A et b 
+                    A = vcat(A, uA_abs)
+                    b = vcat(b, ub_abs)
+                    # global A      
+                    # global b
+                    
+                end
+            end
         
-        elseif methode == "PNLE"
+        elseif methode == "PNLE" || methode == "PNLEHighlyViolated"
 
             m = size(A)[1]
             n = size(A)[2]
@@ -260,26 +328,36 @@ function branchAndBoundCoupe(A_entree::Array{Float64, 2}, b_entree::Array{Float6
 
             solvable = false
 
+            # On verifie si le problème est solvable, en ragardant si il existe un b[i] = 1 où si une des coupes est violée
             for i in 1:m
 
                 if b_barre[i] == 1
 
                     solvable = true
 
-                end
+                end                
             end
 
             if solvable
                 # Mise en place du modele pour trouver la coupe la plus violée
                 modele = Model(CPLEX.Optimizer)
+                set_parameter(modele, "CPX_PARAM_TILIM", 60)
                 @variable(modele, q, Int)
                 @variable(modele, r[i in 1:n], Int)
                 @variable(modele, y[i in 1:n], Bin)
                 @variable(modele, z[i in 1:m], Bin)
                 @constraint(modele, [i in 1:n], r[i] >= 0)
                 @constraint(modele, q >= 0)
-                @constraint(modele, sum(b_barre[i] * z[i] for i in 1:n) - 2 * q == 1)
+                @constraint(modele, sum(b_barre[i] * z[i] for i in 1:m) - 2 * q == 1)
                 @constraint(modele, [j in 1:n], sum(A_barre[i, j] * z[i] for i in 1:m) - 2 * r[j] - y[j] == 0)
+
+                # On ne considere que les coupes avec une violation suffisante
+                # if methode == "PNLEHighlyViolated"
+
+                #     @constraint(modele, sum(s[i] * z[i] for i in 1:m) + sum(x_sol[j] * y[j] for j in 1:n) <= 1 - 0.7)
+
+                # end
+
                 @objective(modele, Min, sum(s[i] * z[i] for i in 1:m) + sum(x_sol[j] * y[j] for j in 1:n))
                 optimize!(modele)
 
@@ -317,10 +395,13 @@ function branchAndBoundCoupe(A_entree::Array{Float64, 2}, b_entree::Array{Float6
 
                     b_coupe = floor(sum(u_sol[i] * b[i] for i in 1:m))
 
+
+
+
                     # On ajoute A_coupe et b_coupe à A et b
                     A = vcat(A, transpose(A_coupe))
                     b = vcat(b, b_coupe)
-
+                    
                     # Definition de la nouvelle contrainte
                     con = @build_constraint(sum(A_coupe[i] * x[i] for i in 1:n) <= b_coupe)
                 
@@ -344,7 +425,7 @@ function branchAndBoundCoupe(A_entree::Array{Float64, 2}, b_entree::Array{Float6
     MOI.set(model, MOI.UserCutCallback(), testCallback)
 
     # On met en place une durée maximale
-    set_parameter(model, "CPX_PARAM_TILIM", 3600)
+    set_parameter(model, "CPX_PARAM_TILIM", 600)
     
     # Start a chronometer
     start = time()    
@@ -399,7 +480,7 @@ function branchAndBound(A::Array{Float64, 2}, b_entree::Array{Float64, 1} = Arra
     @objective(model, Min, sum(x[i] for i in 1:n))
     
     # On met en place une durée maximale 
-    set_parameter(model, "CPX_PARAM_TILIM", 3600)
+    set_parameter(model, "CPX_PARAM_TILIM", 60)
 
     # Start a chronometer
     start = time()    
